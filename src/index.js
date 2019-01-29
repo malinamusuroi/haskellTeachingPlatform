@@ -1,9 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
-const title = 'Haskell Online Teaching Platform';
+import App from './App';
 
 ReactDOM.render(
-  <div>{title}</div>,
+  <App />,
   document.getElementById('app')
 );
