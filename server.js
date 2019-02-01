@@ -30,7 +30,9 @@ app.get('/', function (req, res) {
 
 app.post('/compile', function (req, res) {
     const haskellCode = req.body;
-    const fileContent = "main = do print (" + haskellCode.val + ")";
+    var fileContent = haskellCode.val
+    const functionCall = haskellCode.v
+    fileContent = fileContent + '\n' + 'main=undefined'
     var response;
     fs.writeFile("../../haskellFile.hs", fileContent, function (err) {
         if (err) {
@@ -38,23 +40,18 @@ app.post('/compile', function (req, res) {
         }
         console.log("The file was saved!");
     });
-    exec('cd ../../ && ghc haskellFile.hs', function (error, stdout, stderr) {
-        console.log('stdout: ', stdout);
-        console.log('stderr: ', stderr);
-        if (error !== null) {
-            response = error.toString();
-            res.json({ body: response });
-            return;
-        }
-        console.log("The file was compiled!");
-        exec('cd ../../ && ./haskellFile', function (error, stdout, stderr) {
-            console.log('stdout: ', stdout);
-            console.log('stderr: ', stderr);
-            if (error !== null) {
-                console.log('exec error: ', error);
-            }
-            response = stdout;
-            res.json({ body: response });
-        });
+    const call  = 'cd ../../ && echo ' + functionCall + '| ghci -ddump-json haskellFile.hs'
+    exec(call, function (error, stdout, stderr) {
+       console.log('stdout: ', stdout);
+       console.log('stderr: ', stderr);
+       if (stderr !== "") {
+          console.log('stderr: ', stderr);
+          res.json({ body: stderr });
+          console.log('exec error: ', error);
+          return;
+       }
+       response = stdout.substring(stdout.indexOf("*Main") + 1);
+       res.json({ body: response });
     });
 });
+;
