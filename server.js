@@ -24,10 +24,6 @@ app.listen(port, function (error) {
     }
 });
 
-app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, './public/index.html'));
-});
-
 app.post('/compile', function (req, res) {
     const haskellCode = req.body;
     var fileContent = haskellCode.val
@@ -54,4 +50,7 @@ app.post('/compile', function (req, res) {
        res.json({ body: response });
     });
 });
-;
+
+app.get('*', function (req, res) {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+});
