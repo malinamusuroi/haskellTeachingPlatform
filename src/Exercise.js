@@ -4,6 +4,7 @@ import  './Exercise.css'
 import { Switch, Route, Link, BrowserRouter as Router } from 'react-router-dom'
 import {parse} from "./parser"
 import JSONTree from 'react-json-tree'
+import visit from "./visitor"
 
 
 class Exercise extends Component {
@@ -15,7 +16,9 @@ class Exercise extends Component {
       testValue: '',
       example: '',
       exampleValue: '',
-      ast: ''
+      ast: '',
+      checkValue: '',
+      checkResult: ''
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleExample = this.handleExample.bind(this);
@@ -23,6 +26,8 @@ class Exercise extends Component {
     this.handleExample = this.handleExample.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.onSubmitAST = this.onSubmitAST.bind(this);
+    this.onCheckIfSame = this.onCheckIfSame.bind(this);
+    this.handleInput = this.handleInput.bind(this);
   }
   
   handleChange(input) {
@@ -44,6 +49,10 @@ class Exercise extends Component {
       }
   }
 
+  handleInput(input) {
+    this.setState({ checkValue: input.target.value })
+  }
+
   handleValue(input) {
     console.log("Input value: " + input.target.value)
     this.setState({ testValue: input.target.value })
@@ -52,6 +61,8 @@ class Exercise extends Component {
   onSubmit = () => {
     var inputValue = this.state.value
     var testInput = this.state.testValue
+    console.log("Hellloooooo hereeeeeeee Mush")
+    console.log(inputValue);
     fetch('/compile', {
       method: 'POST',
       body: JSON.stringify({ val: inputValue, v: testInput}),
@@ -64,7 +75,15 @@ class Exercise extends Component {
 
   onSubmitAST() {
     var ast = parse(this.state.value);
+    var array = JSON.stringify(ast);
     this.setState({ ast })
+  }
+
+  onCheckIfSame() {
+    console.log(parse(this.state.value));
+    let value = visit(parse(this.state.value), parse(this.state.checkValue));
+    this.setState({checkResult: "" + value})
+    console.log("Are the values the same??????" + value)
   }
 
   render() {
@@ -83,6 +102,11 @@ class Exercise extends Component {
             <textarea align="top" type="text" id="name" name="name" className="test-area" value={this.state.testValue} onChange={this.handleValue} />
            </div>
          </div>
+         <div style={{marginRight: '800px'}}>
+            <p> Check if same as sample solution: </p>
+            <textarea align="top" type="text" id="name" name="name" className="code-area" value={this.state.checkValue} onChange={this.handleInput} />
+         </div>
+         <div className="result"> CheckResult: {this.state.checkResult} </div>
         <div style={{ marginTop: '5px', marginLeft: '270px' }} >
           <button onClick={this.onSubmit}> Submit </button>
         </div>
@@ -90,6 +114,7 @@ class Exercise extends Component {
 
         <div className="result"> AST: <JSONTree data={this.state.ast}/></div>
         <button onClick={this.onSubmitAST}> See AST </button>
+        <button onClick={this.onCheckIfSame}> Check value </button>
         <Link to="/" style={{display: 'block', textAlign: 'center'}}>Previous</Link>
       </div>
     )
