@@ -5,12 +5,14 @@ import { Switch, Route, Link, BrowserRouter as Router } from 'react-router-dom'
 import {parse} from "./parser"
 import JSONTree from 'react-json-tree'
 import visit from "./visitor"
+import MonacoEditor from 'react-monaco-editor';
 
 
 class Exercise extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      code: '// type your code...',
       value: '',
       data: '',
       testValue: '',
@@ -61,8 +63,6 @@ class Exercise extends Component {
   onSubmit = () => {
     var inputValue = this.state.value
     var testInput = this.state.testValue
-    console.log("Hellloooooo hereeeeeeee Mush")
-    console.log(inputValue);
     fetch('/compile', {
       method: 'POST',
       body: JSON.stringify({ val: inputValue, v: testInput}),
@@ -86,7 +86,19 @@ class Exercise extends Component {
     console.log("Are the values the same??????" + value)
   }
 
+  editorDidMount(editor, monaco) {
+    console.log('editorDidMount', editor);
+    editor.focus();
+  }
+  onChangeee(newValue, e) {
+    console.log('onChange', newValue, e);
+  }
+
   render() {
+    const code = this.state.code;
+    const options = {
+      selectOnLineNumbers: true
+    };
     return (
       <div>
         <p className="title"> Haskell Online Teaching Platform </p>
@@ -97,6 +109,7 @@ class Exercise extends Component {
          {this.state.example}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px'}}>
          <textarea align="top" type="text" id="name" name="name" className="code-area" value={this.state.value} onChange={this.handleChange} />
+         {this.state.checkResult !=="" && <span style={{backgroundColor:"red", textEmphasisColor: "white"}}>{this.state.checkResult}</span>}
           <div style={{marginRight: '800px'}}>
             <p> Test your program: </p>
             <textarea align="top" type="text" id="name" name="name" className="test-area" value={this.state.testValue} onChange={this.handleValue} />
