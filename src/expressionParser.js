@@ -398,7 +398,7 @@ module.exports = /*
     function peg$parsestart() {
       var s0;
 
-      s0 = peg$parsefunctionDefinitionList();
+      s0 = peg$parseexpressionWithFunction();
 
       return s0;
     }
