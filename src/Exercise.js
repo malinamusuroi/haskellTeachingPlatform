@@ -1,148 +1,211 @@
 import React, { Component } from 'react';
-import { Button } from 'antd';
-import './Exercise.css'
-import { Switch, Route, Link, BrowserRouter as Router } from 'react-router-dom'
-import { parse } from "./parser"
-import { parse as expressionParse } from "./expressionParser"
-import visit from "./visitor"
-import visitWithExpression from "./visitWithExpression"
-import MonacoEditor from 'react-monaco-editor';
+import './Exercise.css';
+import { Link } from 'react-router-dom';
+import { parse } from './parser';
+import { parse as expressionParse } from './expressionParser';
+import visit from './visitor';
+import visitWithExpression from './visitWithExpression';
+import Editor from './Editor';
 
 class Exercise extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      results: [],
+      tests: [],
       value: '',
+      problem: '',
       data: '',
       testValue: '',
-      example: '',
-      exampleValue: '',
-      checkValue: '',
-      editor: {},
-      badInput: ''
+      correctModel: '',
+      badPatterns: '',
+      savedValues: '',
     };
   }
 
-  handleChange = (val) => {
-    this.setState({ value: val })
-  }
-
-  handleExample = (input) => {
-    this.setState({ exampleValue: input.target.value })
-  }
-
-  onExampleSubmit = () => {
-    if (this.state.value2 !== 'False') {
-      this.setState({ example: "Wrong answer" })
-    } else if (this.state.value2 !== 'True') {
-      this.setState({ example: "Correct answer" })
-    } else {
-      this.setState({ example: " " })
-    }
-  }
-
-  handleInput = (input) => {
-    this.setState({ checkValue: input.target.value })
-  }
-
-  handleBadInput = (input) => {
-    this.setState({ badInput: input.target.value })
+  componentDidMount = () => {
+    fetch('../model.json')
+      .then(response => response.json()).then((myJson) => {
+        this.setState({
+          correctModel: myJson.model,
+          badExpressions: myJson.wrongExpression,
+          badPatterns: myJson.wrongPatterns,
+          problem: myJson.problem,
+          tests: myJson.tests,
+        });
+      });
   }
 
   handleValue = (input) => {
-    this.setState({ testValue: input.target.value })
+    this.setState({ testValue: input.target.value });
   }
 
   onSubmit = () => {
-    var inputValue = this.state.value
-    var testInput = this.state.testValue
+    const { value: inputValue, testInput } = this.state;
     fetch('/compile', {
       method: 'POST',
       body: JSON.stringify({ val: inputValue, v: testInput }),
       headers: {
-        "Content-Type": "application/json",
-      }
+        'Content-Type': 'application/json',
+      },
     }).then(res => res.json()).then(result => this.setState({ data: result.body }))
-      .catch(error => console.log(error));
+      // eslint-disable-next-line no-console
+      .catch(console.error);
   }
 
-  onCheckIfSame = () => {
-    let errors = visit(parse(this.state.value)[0], parse(this.state.checkValue)[0], [], []);
-    const instructorErrors = visitWithExpression(parse(this.state.value)[0], expressionParse(this.state.badInput), [])
-      .filter(error => error != null);
+  onCodeChange = (code) => {
+    this.compareWithModel(code);
+    this.runTests(code);
+    this.setState({ value: code });
+  };
 
-    errors = errors.concat(instructorErrors);
-    this.setState({ compilerErrors: errors });
-    const {
-      editor,
-      decorations: previousDecorations = []
-    } = this.state;
-    var decorations = editor.deltaDecorations(previousDecorations, errors.map(error => (
-      {
-        range: new monaco.Range(error.lineNumber, error.startPosition, error.lineNumber, error.endPosition),
-        options: { inlineClassName: 'myInlineDecoration' }
+  compareWithModel = (code) => {
+    let errors = [];
+    this.setState({ isShowingErrors: false });
+
+    try {
+      parse(code);
+      const savedValues = [];
+      const { correctModel, badExpressions, badPatterns } = this.state;
+      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, []);
+      this.setState({ savedValues });
+      badExpressions.forEach((exp) => {
+        let instructorErrors = visitWithExpression(parse(code)[0], expressionParse(exp.pattern), [])
+          .filter(error => error != null);
+
+        if (instructorErrors.length !== 0) {
+          instructorErrors = instructorErrors.map(err => ({
+            ...err,
+            message: exp.message,
+          }));
+        }
+        errors = errors.concat(instructorErrors);
+      });
+
+      badPatterns.forEach((exp) => {
+        const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], []);
+        if (instructorErrors.length === 0) {
+          errors.push({
+            name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
+          });
+        }
+      });
+    } catch (err) {
+      if (err.toString().includes('::')) {
+        errors = [{
+          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: 'Please provide a type signature',
+        }];
+      } else {
+        errors = [{
+          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: '',
+        }];
       }
-    )));
-    this.setState({ decorations });
+    }
+
+    if (errors.length === 0) errors.push({ lineNumber: 1, startPosition: 1, message: 'No errors to display at the moment!' });
+    this.setState({ compilerErrors: errors });
+    this.editor.displayErrors(errors);
   }
 
-  editorDidMount = (editor) => {
-    editor.focus();
-    this.setState({ editor });
+  runTests = (code) => {
+    const { tests } = this.state;
+    const { savedValues } = this.state;
+    const testsToRun = tests.map((elem) => {
+      const firstWord = elem.value.substr(0, elem.value.indexOf(' '));
+      const second = elem.value.substr(elem.value.indexOf(' ') + 1);
+      const savedValue = savedValues.find(savedVal => savedVal.dollarValue === firstWord);
+
+      return savedValue ? ({
+        ...elem,
+        value: `${savedValue.correspondent} ${second}`,
+      }) : elem;
+    });
+    const inputValue = code;
+    testsToRun.forEach((elem, index) => fetch('/compile', {
+      method: 'POST',
+      body: JSON.stringify({ val: inputValue, v: elem.value }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).then(res => res.json()).then((result) => {
+      if (!result.isError) {
+        testsToRun[index].result = result.body.includes(elem.match);
+      } else {
+        testsToRun[index].result = false;
+      }
+      this.setState({ results: testsToRun });
+    }));
   }
 
   renderErrors = () => {
-    const formatDiagnostic = ({ lineNumber, startPosition, message }) => {
-      return `${lineNumber}:${startPosition}: ${message}\n`;
-    };
+    const formatDiagnostic = ({ lineNumber, startPosition, message }) => `${lineNumber}:${startPosition}: ${message}\n`;
+    const { compilerErrors } = this.state;
+    if (compilerErrors !== undefined && compilerErrors.length !== 0) {
+      const { isShowingErrors } = this.state;
+      return (
+        <div>
+          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Show errors</button>
+          {isShowingErrors
+            && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
+          }
+        </div>
+      );
+    }
+    return null;
+  }
 
-    return (
-      <div>
-        <button onClick={() => this.setState({ isShowingErrors: true })}>Show errors</button>
-        {this.state.isShowingErrors &&
-          <pre>{this.state.compilerErrors.map(formatDiagnostic)}</pre>
-        }
+  renderTests = () => {
+    const { results } = this.state;
+    return results.map(elem => (
+      <div key={elem.value} className="results">
+        <pre>{elem.value}</pre>
+        {elem.result !== '' && elem.value !== undefined && <span>{elem.result === true ? '✅' : '❌'}</span>}
       </div>
-    )
-  };
+    ));
+  }
 
   render() {
-    const options = {
-      selectOnLineNumbers: true,
-      glyphMargin: true,
-      minimap: {
-        enabled: false
-      }
-    };
+    const {
+      problem,
+      testValue,
+      data,
+      results,
+    } = this.state;
+
     return (
-      <div>
-        <p className="title"> Haskell Online Teaching Platform </p>
-        <p>Write a function which returns true if a list contains at least a duplicate</p>
-        <b> Given the input [1, 2, 3] what is the output of your program? </b>
-        <textarea className="example-area" align="top" type="text" id="name" name="name" value={this.state.exampleValue} onChange={this.handleExample} />
-        <button onClick={this.onExampleSubmit}> Submit </button>
-        {this.state.example}
+      <div style={{ width: '980px', margin: 'auto' }}>
+        <p className="problem">{problem}</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
-          <MonacoEditor width="500" height="400" language="haskell" theme="vs-dark" value={this.state.value} options={options} onChange={this.handleChange} editorDidMount={this.editorDidMount} ref={(r) => this.r = r} />
-          <div style={{ marginRight: '800px' }}>
+          <Editor
+            onChange={this.onCodeChange}
+            debounceTimeout={1000}
+            ref={(editor) => { this.editor = editor; }}
+          />
+          <div style={{ marginLeft: '4em' }}>
             <p> Test your program: </p>
-            <textarea align="top" type="text" id="name" name="name" className="test-area" value={this.state.testValue} onChange={this.handleValue} />
+            <textarea type="text" id="name" className="test-area" value={testValue} onChange={this.handleValue} />
+            <div className="result">
+              Result:
+              {data}
+            </div>
           </div>
         </div>
-        <div style={{ marginRight: '800px' }}>
-          {this.renderErrors()}
-          <p> Check if same as sample solution: </p>
-          <textarea align="top" type="text" id="name" name="name" className="code-area" value={this.state.checkValue} onChange={this.handleInput} />
-          <textarea align="top" type="text" className="code-area" value={this.state.badInput} onChange={this.handleBadInput} />
+        <div style={{ display: 'flex' }}>
+          <div>
+            {this.renderErrors()}
+          </div>
+          <div>
+            <button type="button" onClick={this.onSubmit}> Submit </button>
+          </div>
         </div>
-        <div style={{ marginTop: '5px', marginLeft: '270px' }} >
-          <button onClick={this.onSubmit}> Submit </button>
-        </div>
-        <div className="result"> Result: {this.state.data} </div>
-        <button onClick={this.onCheckIfSame}> Check value </button>
+        {results.length !== 0 && (
+          <div className="tests">
+            {this.renderTests()}
+          </div>
+        )}
         <Link to="/" style={{ display: 'block', textAlign: 'center' }}>Previous</Link>
       </div>
-    )
+    );
   }
 }
 

@@ -1,0 +1,43 @@
+{
+    "problem": "Write a function which returns true if a list contains at least a duplicate",
+    "model": "$a :: [Int] -> Bool\n$a [] = False\n$a ($x:$xs) = _ || _ ",
+    "wrongExpression": [
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "tail _",
+            "message": "Don't use tail. Instead, use pattern matching."
+        }
+    ],
+    "wrongPatterns": [
+        {
+            "pattern": "_\ntwoSame [] = True\n_",
+            "message": "For a list with no elements, there will not be 2 elements the same!",
+            "lineNumber": 2
+        }
+    ],
+    "tests": [
+        {
+         "value": "$a []",
+         "match": "False",
+         "result": ""
+        },
+        {
+            "value": "$a [3, 4, 3]",
+            "match": "True",
+            "result": ""
+        },
+        {
+            "value": "$a [3, 4, 5]",
+            "match": "False",
+            "result": ""
+        },
+        {
+            "value": "$a [3, 4, 5, 6, 7, 3, 7, 9]",
+            "match": "True",
+            "result": ""
+        }
+    ]
+}

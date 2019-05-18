@@ -16,7 +16,6 @@
   font-weight: bold;
   font-size: 12px;
   margin-left: 20px 
-
 }
 
 .test-area {
@@ -50,4 +49,35 @@
   background-repeat: no-repeat;  
   display: block; 
   margin-left: 1em;
+}
+
+
+.tests {
+  margin-top: 5em;
+  background-color: #F0F0F0;
+  margin: black;
+  width: 50em;
+  padding: 2em;
+}
+
+.problem {
+  margin-top: 3.5em;
+  font-size: 1.2em;
+}
+
+.results > * {
+  display: inline;
+}
+
+.results pre {
+  padding-right: 1em;
+}
+
+.results + .results {
+  padding-top: 1.5em;
+}
+
+.error-display {
+  padding-top: 0.8em;
+  font: red;
 }

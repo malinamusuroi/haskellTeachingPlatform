@@ -30,7 +30,7 @@ app.post('/compile', function (req, res) {
     const functionCall = haskellCode.v
     fileContent = fileContent + '\n' + 'main=undefined'
     var response;
-    fs.writeFile("../../haskellFile.hs", fileContent, function (err) {
+    fs.writeFileSync("../../haskellFile.hs", fileContent, function (err) {
         if (err) {
             return console.log(err);
         }
@@ -42,12 +42,12 @@ app.post('/compile', function (req, res) {
        console.log('stderr: ', stderr);
        if (stderr !== "") {
           console.log('stderr: ', stderr);
-          res.json({ body: stderr });
+          res.json({ body: stderr, isError: true });
           console.log('exec error: ', error);
           return;
        }
        response = stdout.substring(stdout.indexOf("*Main") + 1);
-       res.json({ body: response });
+       res.json({ code: functionCall, body: response, isError: false });
     });
 });
 
