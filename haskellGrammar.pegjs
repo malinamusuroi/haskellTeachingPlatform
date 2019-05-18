@@ -1,5 +1,5 @@
 start
-  = functionDefinitionPlusWhitespace
+  = functionDefinitionList
 
 functionDefinitionList
   = functionDefinitionPlusWhitespace*
@@ -14,6 +14,8 @@ functionDefinition
     startPosition: location().start.column,
     endPosition: location().end.column,
     name: typeSignature && typeSignature.functionName && typeSignature.functionName.name,
+    nameStartPosition: typeSignature && typeSignature.functionName && typeSignature.functionName.startPosition,
+    nameEndPosition:typeSignature && typeSignature.functionName && typeSignature.functionName.endPosition,
     typeSignature: typeSignature,
     patterns: patterns,
   }; }
@@ -43,8 +45,8 @@ functionDefinitionPatternLine
     name: functionName.name,
     isUnderscore: functionName.isUnderscore,
     lineNumber: part.lineNumber,
-    startPosition: location().start.column,
-    endPosition: location().end.column,
+    startPosition: functionName.startPosition,
+    endPosition: functionName.endPosition,
     arguments: part.arguments,
     expression: part.expression,
   }}
@@ -79,11 +81,11 @@ expression
   / functionName;
 
 expressionWithFunction
-  =  infixFunctionApplication
+  = infixFunctionApplication 
+  / functionApplication
   / expression
   / "_" { return { kind: "expression",lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true } }
-  / functionApplication
 
 functionApplication
   = f:functionName whitespace args:expression_list {return {kind: 'functionApplication', lineNumber: location().start.line, startPosition: location().start.column,

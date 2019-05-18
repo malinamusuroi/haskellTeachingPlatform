@@ -21,7 +21,7 @@ export default function visitWithExpression(node1, node2, array) {
 function displayErrorIfSame(node1, node2) {
     if (visit(node1, node2, [], []).length === 0) {
         return {
-            message: "Pattern violation. This pattern was marked invalid by the instructor.",
+           // message: "Pattern violation. This pattern was marked invalid by the instructor.",
             name: node1.name,
             lineNumber: node1.lineNumber,
             startPosition: node1.startPosition,
