@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 import visit from './visitor';
 
 export default function visitWithExpression(node1, node2, array) {
@@ -7,13 +8,12 @@ export default function visitWithExpression(node1, node2, array) {
       case 'pattern': return visitPattern(node1, node2, array);
       case 'listPattern': return visitListPattern(node1, node2, array);
       case 'emptyListPattern': return visitEmptyListPattern(node1, node2, array);
-      case 'typeSignature': return visitTypeSignature(node1, node2, array);
       case 'functionApplication': return visitFunctionApplication(node1, node2, array);
       case 'functionName': return visitFunctionName(node1, node2, array);
       case 'bracketedExpression': return visitBracketedexpression(node1, node2, array);
       case 'expression': return visitExpression(node1, node2, array);
+      default: return null;
     }
-    return array;
   }
   return array;
 }
@@ -21,7 +21,6 @@ export default function visitWithExpression(node1, node2, array) {
 function displayErrorIfSame(node1, node2) {
   if (visit(node1, node2, [], []).length === 0) {
     return {
-      // message: "Pattern violation. This pattern was marked invalid by the instructor.",
       name: node1.name,
       lineNumber: node1.lineNumber,
       startPosition: node1.startPosition,
@@ -38,7 +37,7 @@ function visitFunctionDefinition(node1, node2, array) {
 
   visitWithExpression(node1.expression, node2, array);
 
-  for (let i = 0; i < node1.patterns.length; i++) {
+  for (let i = 0; i < node1.patterns.length; i += 1) {
     visitWithExpression(node1.patterns[i], node2, array);
   }
   return array;
@@ -76,7 +75,7 @@ function visitPattern(node1, node2, array) {
   if (node1.kind === node2.kind) {
     array.push(displayErrorIfSame(node1, node2));
   }
-  for (let i = 0; i < node1.arguments.length; i++) {
+  for (let i = 0; i < node1.arguments.length; i += 1) {
     visitWithExpression(node1.arguments[i], node2, array);
   }
   visitWithExpression(node1.expression, node2, array);
@@ -88,7 +87,7 @@ function visitFunctionApplication(node1, node2, array) {
     array.push(displayErrorIfSame(node1, node2));
   }
   if (!node2.isUnderscore) {
-    for (let i = 0; i < node1.arguments.length; i++) {
+    for (let i = 0; i < node1.arguments.length; i += 1) {
       visitWithExpression(node1.arguments[i], node2, array);
     }
     visitWithExpression(node1.functionName, node2, array);

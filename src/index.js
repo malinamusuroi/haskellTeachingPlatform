@@ -1,9 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {
-  Switch, Route, Link, BrowserRouter as Router,
+  Switch, Route, BrowserRouter as Router,
 } from 'react-router-dom';
-import App from './App';
 import Exercise from './Exercise';
 import Lesson from './Lesson';
 
