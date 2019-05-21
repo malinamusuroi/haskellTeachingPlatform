@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 export default function visit(node1, node2, savedValue, array) {
   if (node1 !== undefined && node1.kind !== undefined) {
     if (node2.isUnderscore) {
@@ -5,7 +6,6 @@ export default function visit(node1, node2, savedValue, array) {
     }
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
-        console.log('node');
         array.push({
           name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
         });
@@ -22,6 +22,7 @@ export default function visit(node1, node2, savedValue, array) {
           case 'arrayType': return visitArrayType(node1, node2, savedValue, array);
           case 'type': return visitType(node1, node2, savedValue, array);
           case 'expression': return visitExpression(node1, node2, savedValue, array);
+          default: return null;
         }
       }
     }
@@ -34,6 +35,7 @@ function checkIfDollar(value2) {
   if (value2 !== undefined && value2.name !== undefined) {
     return value2.name[0] === '$';
   }
+  return false;
 }
 
 function checkDollarValues(userValue, rightValue, array, savedValue) {
@@ -51,6 +53,16 @@ function checkDollarValues(userValue, rightValue, array, savedValue) {
   if (!value) {
     savedValue.push({ dollarValue: rightValue.name, correspondent: userValue.name });
   }
+}
+
+function visitTypeSignature(node1, node2, savedValue, array) {
+  if (!node2.isUnderscore) {
+    for (let i = 0; i < node1.types.length; i += 1) {
+      array.concat(visit(node1.types[i], node2.types[i], savedValue, array));
+    }
+    return array;
+  }
+  return array;
 }
 
 function visitFunctionDefinition(node1, node2, savedValue, array) {
@@ -77,18 +89,8 @@ function visitFunctionDefinition(node1, node2, savedValue, array) {
   array.concat(visit(node1.expression, node2.expression, savedValue, array));
   array.concat(visitTypeSignature(node1.typeSignature, node2.typeSignature, savedValue, array));
 
-  for (let i = 0; i < node1.patterns.length; i++) {
+  for (let i = 0; i < node1.patterns.length; i += 1) {
     array.concat(visit(node1.patterns[i], node2.patterns[i], savedValue, array));
-  }
-  return array;
-}
-
-function visitTypeSignature(node1, node2, savedValue, array) {
-  if (!node2.isUnderscore) {
-    for (let i = 0; i < node1.types.length; i++) {
-      array.concat(visit(node1.types[i], node2.types[i], savedValue, array));
-    }
-    return array;
   }
   return array;
 }
@@ -113,6 +115,7 @@ function visitArrayType(node1, node2, savedValue, array) {
       name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'The type signature you provided is not correct.',
     });
   }
+  return array;
 }
 
 function visitPattern(node1, node2, savedValue, array) {
@@ -126,7 +129,7 @@ function visitPattern(node1, node2, savedValue, array) {
     }
   }
 
-  for (let i = 0; i < node1.arguments.length; i++) {
+  for (let i = 0; i < node1.arguments.length; i += 1) {
     array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
   }
   return array.concat(visit(node1.expression, node2.expression, savedValue, array));
@@ -143,6 +146,7 @@ function visitEmptyListPattern(node1, node2, savedValue, array) {
       return array;
     }
   }
+  return array;
 }
 
 function visitListPattern(node1, node2, savedValue, array) {
@@ -194,23 +198,27 @@ function visitFunctionName(node1, node2, savedValue, array) {
     }
     return array;
   }
+  return array;
 }
 
+// eslint-disable-next-line consistent-return
 function visitExpression(node1, node2, savedValue, array) {
   if (node2.isUnderscore) return array;
 }
 
 function visitFunctionApplication(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
-    for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i++) {
+    for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
       array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
     }
     return array.concat(visit(node1.functionName, node2.functionName, savedValue, array));
   }
+  return array;
 }
 
 function visitBracketedexpression(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     return array.concat(visit(node1.expression, node2.expression, savedValue, array));
   }
+  return array;
 }

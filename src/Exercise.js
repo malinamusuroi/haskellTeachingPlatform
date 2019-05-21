@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import './Exercise.css';
-import { Link } from 'react-router-dom';
 import { parse } from './parser';
 import { parse as expressionParse } from './expressionParser';
 import visit from './visitor';
 import visitWithExpression from './visitWithExpression';
 import Editor from './Editor';
+import NavBar from './NavigationBar';
 
 class Exercise extends Component {
   constructor(props) {
@@ -17,6 +17,7 @@ class Exercise extends Component {
       problem: '',
       data: '',
       testValue: '',
+      examples: '',
       correctModel: '',
       badPatterns: '',
       savedValues: '',
@@ -32,6 +33,7 @@ class Exercise extends Component {
           badPatterns: myJson.wrongPatterns,
           problem: myJson.problem,
           tests: myJson.tests,
+          examples: myJson.examples,
         });
       });
   }
@@ -41,10 +43,10 @@ class Exercise extends Component {
   }
 
   onSubmit = () => {
-    const { value: inputValue, testInput } = this.state;
+    const { value: inputValue, testValue } = this.state;
     fetch('/compile', {
       method: 'POST',
-      body: JSON.stringify({ val: inputValue, v: testInput }),
+      body: JSON.stringify({ val: inputValue, v: testValue }),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -170,40 +172,44 @@ class Exercise extends Component {
       testValue,
       data,
       results,
+      examples,
     } = this.state;
 
     return (
-      <div style={{ width: '980px', margin: 'auto' }}>
-        <p className="problem">{problem}</p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
-          <Editor
-            onChange={this.onCodeChange}
-            debounceTimeout={1000}
-            ref={(editor) => { this.editor = editor; }}
-          />
-          <div style={{ marginLeft: '4em' }}>
-            <p> Test your program: </p>
-            <textarea type="text" id="name" className="test-area" value={testValue} onChange={this.handleValue} />
-            <div className="result">
-              Result:
-              {data}
+      <div>
+        <NavBar> </NavBar>
+        <div style={{ width: '980px', margin: 'auto' }}>
+          <p className="problem">{problem}</p>
+          <pre className="examples">{examples}</pre>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+            <Editor
+              onChange={this.onCodeChange}
+              debounceTimeout={1000}
+              ref={(editor) => { this.editor = editor; }}
+            />
+            <div style={{ marginLeft: '4em' }}>
+              <p> Test your program: </p>
+              <textarea type="text" id="name" className="test-area" value={testValue} onChange={this.handleValue} />
+              <div className="result">
+                Result:
+                {data}
+              </div>
             </div>
           </div>
+          <div style={{ display: 'flex' }}>
+            <div>
+              {this.renderErrors()}
+            </div>
+            <div>
+              <button type="button" onClick={this.onSubmit}> Submit </button>
+            </div>
+          </div>
+          {results.length !== 0 && (
+            <div className="tests">
+              {this.renderTests()}
+            </div>
+          )}
         </div>
-        <div style={{ display: 'flex' }}>
-          <div>
-            {this.renderErrors()}
-          </div>
-          <div>
-            <button type="button" onClick={this.onSubmit}> Submit </button>
-          </div>
-        </div>
-        {results.length !== 0 && (
-          <div className="tests">
-            {this.renderTests()}
-          </div>
-        )}
-        <Link to="/" style={{ display: 'block', textAlign: 'center' }}>Previous</Link>
       </div>
     );
   }
