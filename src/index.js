@@ -1,17 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {
-  Switch, Route, BrowserRouter as Router,
-} from 'react-router-dom';
-import Exercise from './Exercise';
-import Lesson from './Lesson';
+import App from './App';
 
 ReactDOM.render(
-  <Router>
-    <Switch>
-      <Route path="/exercise" component={Exercise} />
-      <Route path="/" component={Lesson} />
-    </Switch>
-  </Router>,
+  <App />,
   document.getElementById('root'),
 );

@@ -1,20 +1,15 @@
-// import React, { Component }  from 'react';
-// import ReactDOM from 'react-dom';
-// import { Switch, Route, Link, BrowserRouter as Router } from 'react-router-dom'
-// import Exercise from './Exercise';
-// import Lesson from './Lesson';
-// import Home from './Home';
+import React from 'react';
+import { Switch, Route, BrowserRouter as Router } from 'react-router-dom';
+import Exercise from './Exercise';
+import Lesson from './Lesson';
 
+const App = () => (
+  <Router>
+    <Switch>
+      <Route path="/exercise" component={Exercise} />
+      <Route path="/" component={Lesson} />
+    </Switch>
+  </Router>
+);
 
-// class App extends Component {
-//  render() {
-//   return (
-//     <div>
-//       <Route exact path="/" component={Exercise} />
-//       <Route path="/exercise" component={Lesson} />
-//     </div>
-//   )
-//  }
-// }
-
-// export default App;
+export default App;
