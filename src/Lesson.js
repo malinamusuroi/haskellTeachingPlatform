@@ -5,6 +5,8 @@ import './Lesson.css';
 import { Row, Col } from 'antd';
 import NavBar from './NavigationBar';
 
+import HaskellJSProgram from './hsjs/ProgramComponent';
+
 class Lesson extends Component {
   constructor(props) {
     super(props);
@@ -30,6 +32,7 @@ class Lesson extends Component {
     }).then(res => res.json()).then(result => this.setState({ data: result.body }))
       .catch(error => console.log(error));
   }
+//  defaultValue="map addOne [1,2,3,4,5]"
 
   render() {
     const {
@@ -84,6 +87,9 @@ class Lesson extends Component {
               <br />
               -> 60
               <br />
+              <HaskellJSProgram
+                defaultValue="addOne 4"
+              />
             </Col>
           </Row>
           <p>

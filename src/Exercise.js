@@ -115,12 +115,20 @@ class Exercise extends Component {
     const testsToRun = tests.map((elem) => {
       const firstWord = elem.value.substr(0, elem.value.indexOf(' '));
       const second = elem.value.substr(elem.value.indexOf(' ') + 1);
-      const savedValue = savedValues.find(savedVal => savedVal.dollarValue === firstWord);
+      let savedValue;
+      if (savedValues.length !== 0) {
+        savedValue = savedValues.find(savedVal => savedVal.dollarValue === firstWord);
+      } else {
+        savedValue = null;
+      }
 
-      return savedValue ? ({
+      return savedValue && savedValue.correspondent ? ({
         ...elem,
         value: `${savedValue.correspondent} ${second}`,
-      }) : elem;
+      }) : ({
+        ...elem,
+        value: ` test ${second}`,
+      });
     });
     const inputValue = code;
     testsToRun.forEach((elem, index) => fetch('/compile', {

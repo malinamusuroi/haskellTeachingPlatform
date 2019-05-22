@@ -1,10 +1,10 @@
 /* eslint-disable no-use-before-define */
 export default function visit(node1, node2, savedValue, array) {
   if (node1 !== undefined && node1.kind !== undefined) {
-    if (node2.isUnderscore) {
+    if (node2 !== undefined && node2.isUnderscore) {
       return array;
     }
-    if (!node2.isUnderscore) {
+    if (node2 !== undefined && !node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
         array.push({
           name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
@@ -40,16 +40,16 @@ function checkIfDollar(value2) {
 
 function checkDollarValues(userValue, rightValue, array, savedValue) {
   let value = false;
-  for (const element in savedValue) {
-    if (savedValue[element].dollarValue === rightValue.name) {
+  Object.values(savedValue).forEach((element) => {
+    if (element.dollarValue === rightValue.name) {
       value = true;
-      if (savedValue[element].correspondent !== userValue.name) {
+      if (element.correspondent !== userValue.name) {
         array.push({
           name: userValue.name, lineNumber: userValue.lineNumber, startPosition: userValue.startPosition, endPosition: userValue.endPosition, message: `The value '${userValue.name}' is not the expected one. Use '${rightValue.name}' instead. `,
         });
       }
     }
-  }
+  });
   if (!value) {
     savedValue.push({ dollarValue: rightValue.name, correspondent: userValue.name });
   }
@@ -86,7 +86,7 @@ function visitFunctionDefinition(node1, node2, savedValue, array) {
     }
   }
 
-  array.concat(visit(node1.expression, node2.expression, savedValue, array));
+  //array.concat(visit(node1.expression, node2.expression, savedValue, array));
   array.concat(visitTypeSignature(node1.typeSignature, node2.typeSignature, savedValue, array));
 
   for (let i = 0; i < node1.patterns.length; i += 1) {
