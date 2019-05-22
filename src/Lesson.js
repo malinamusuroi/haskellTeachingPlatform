@@ -32,7 +32,6 @@ class Lesson extends Component {
     }).then(res => res.json()).then(result => this.setState({ data: result.body }))
       .catch(error => console.log(error));
   }
-//  defaultValue="map addOne [1,2,3,4,5]"
 
   render() {
     const {

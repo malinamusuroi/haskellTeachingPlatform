@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import './Exercise.css';
 import { parse } from './parser';
 import { parse as expressionParse } from './expressionParser';
-import visit from './visitor';
 import visitWithExpression from './visitWithExpression';
 import Editor from './Editor';
 import NavBar from './NavigationBar';
+import visit from './visitor';
 
 class Exercise extends Component {
   constructor(props) {
@@ -69,7 +69,7 @@ class Exercise extends Component {
       parse(code);
       const savedValues = [];
       const { correctModel, badExpressions, badPatterns } = this.state;
-      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, []);
+      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, [], true);
       this.setState({ savedValues });
       badExpressions.forEach((exp) => {
         let instructorErrors = visitWithExpression(parse(code)[0], expressionParse(exp.pattern), [])
@@ -99,7 +99,7 @@ class Exercise extends Component {
         }];
       } else {
         errors = [{
-          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: '',
+          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: err,
         }];
       }
     }
@@ -154,7 +154,7 @@ class Exercise extends Component {
       const { isShowingErrors } = this.state;
       return (
         <div>
-          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Show errors</button>
+          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Get hints</button>
           {isShowingErrors
             && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
           }

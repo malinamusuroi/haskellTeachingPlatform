@@ -11,8 +11,7 @@ functionDefinition
   = typeSignature:functionDefinitionTypeSignature patterns:functionDefinitionPatternLine* { return {
     kind: "functionDefinition",
     lineNumber: location().start.line,
-    startPosition: location().start.column,
-    endPosition: location().end.column,
+    endLineNumber: location().end.line,
     name: typeSignature && typeSignature.functionName && typeSignature.functionName.name,
     nameStartPosition: typeSignature && typeSignature.functionName && typeSignature.functionName.startPosition,
     nameEndPosition:typeSignature && typeSignature.functionName && typeSignature.functionName.endPosition,
@@ -23,6 +22,9 @@ functionDefinition
 functionDefinitionTypeSignature = functionName:functionName whitespace "::" whitespace head:type tail:arrowAndType* {
 	return {
     	kind: "typeSignature",
+        lineNumber: location().start.line,
+        startPosition: location().start.column,
+        endPosition: location().end.column,
     	types: [head].concat(tail),
         functionName: functionName
     }
@@ -94,7 +96,7 @@ functionApplication
     endPosition: location().end.column, isUnderscore: true } };
 
 infixFunctionApplication
-  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return {kind: "functionApplication", lineNumber: location().start.line, functionName: f, arguments: [left, right]}}
+  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return {kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
 
 expression_list
   = exp1:expression list:(whitespace_expression)* { list.unshift(exp1); return list; }
