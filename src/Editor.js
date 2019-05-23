@@ -25,33 +25,42 @@ export default class Editor extends Component {
 
   handleChange = (val) => {
     this.setState({ value: val });
-    this.stopTimer();
-    this.startTimer();
-  }
 
-  displayErrors = (errors) => {
-    if (errors.length !== 0) {
-      const {
-        editor,
-        decorations: previousDecorations = [],
-      } = this.state;
-      const decorations = editor.deltaDecorations(previousDecorations, errors.map(error => (
-        {
-          // eslint-disable-next-line no-undef
-          range: new monaco.Range(
-            error.lineNumber,
-            error.startPosition,
-            error.lineNumber,
-            error.endPosition,
-          ),
-          options: { inlineClassName: 'myInlineDecoration' },
-        }
-      )));
-      this.setState({ decorations });
+    const { errors = [] } = this.state;
+    if (errors.length > 0) {
+      this.stopTimer();
+      this.startTimer();
     }
   }
 
+  displayErrors = (errors) => {
+    const {
+      editor,
+      decorations: previousDecorations = [],
+    } = this.state;
+    const decorations = editor.deltaDecorations(previousDecorations, errors.map(error => (
+      {
+        // eslint-disable-next-line no-undef
+        range: new monaco.Range(
+          error.lineNumber,
+          error.startPosition,
+          error.lineNumber,
+          error.endPosition,
+        ),
+        options: { inlineClassName: 'myInlineDecoration' },
+      }
+    )));
+    this.setState({ decorations, errors });
+  }
+
   editorDidMount = (editor) => {
+    editor.addCommand(monaco.KeyCode.Enter, () => {
+      const { value } = this.state;
+      const { onChange } = this.props;
+      onChange(value);
+
+      editor.trigger('keyboard', 'type', { text: '\n' });
+    });
     editor.focus();
     this.setState({ editor });
   }

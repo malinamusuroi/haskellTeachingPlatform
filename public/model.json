@@ -14,7 +14,7 @@
     ],
     "wrongPatterns": [
         {
-            "pattern": "_\ntwoSame [] = True\n_",
+            "pattern": "_\ntwoSame [] = True",
             "message": "For a list with no elements, there will not be 2 elements the same!",
             "lineNumber": 2
         }

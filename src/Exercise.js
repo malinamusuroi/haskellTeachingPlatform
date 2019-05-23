@@ -69,7 +69,7 @@ class Exercise extends Component {
       parse(code);
       const savedValues = [];
       const { correctModel, badExpressions, badPatterns } = this.state;
-      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, [], true);
+      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, []);
       this.setState({ savedValues });
       badExpressions.forEach((exp) => {
         let instructorErrors = visitWithExpression(parse(code)[0], expressionParse(exp.pattern), [])
@@ -85,7 +85,7 @@ class Exercise extends Component {
       });
 
       badPatterns.forEach((exp) => {
-        const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], []);
+        const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], [], true);
         if (instructorErrors.length === 0) {
           errors.push({
             name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
@@ -104,7 +104,6 @@ class Exercise extends Component {
       }
     }
 
-    if (errors.length === 0) errors.push({ lineNumber: 1, startPosition: 1, message: 'No errors to display at the moment!' });
     this.setState({ compilerErrors: errors });
     this.editor.displayErrors(errors);
   }
@@ -192,7 +191,7 @@ class Exercise extends Component {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
             <Editor
               onChange={this.onCodeChange}
-              debounceTimeout={1000}
+              debounceTimeout={500}
               ref={(editor) => { this.editor = editor; }}
             />
             <div style={{ marginLeft: '4em' }}>
