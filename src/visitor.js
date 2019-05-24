@@ -1,17 +1,24 @@
+/* eslint-disable max-len */
 /* eslint-disable no-use-before-define */
-export default function visit(node1, node2, savedValue, array) {
+export default function visit(node1, node2, savedValue, array, isPerfect) {
   if (node1 !== undefined && node1.kind !== undefined) {
-    if (node2.isUnderscore) {
+    if (!node2 || node2.isUnderscore) {
       return array;
     }
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
-        array.push({
-          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
-        });
+        if (node1.kind === 'bracketedExpression') {
+          node1 = node1.expression;
+        } else if (node2.kind === 'bracketedExpression') {
+          node2 = node2.expression;
+        } else {
+          array.push({
+            name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
+          });
+        }
       } else {
         switch (node1.kind) {
-          case 'functionDefinition': return visitFunctionDefinition(node1, node2, savedValue, array);
+          case 'functionDefinition': return visitFunctionDefinition(node1, node2, savedValue, array, isPerfect);
           case 'pattern': return visitPattern(node1, node2, savedValue, array);
           case 'listPattern': return visitListPattern(node1, node2, savedValue, array);
           case 'emptyListPattern': return visitEmptyListPattern(node1, node2, savedValue, array);
@@ -21,6 +28,7 @@ export default function visit(node1, node2, savedValue, array) {
           case 'bracketedExpression': return visitBracketedexpression(node1, node2, savedValue, array);
           case 'arrayType': return visitArrayType(node1, node2, savedValue, array);
           case 'type': return visitType(node1, node2, savedValue, array);
+          case 'bool': return visitBool(node1, node2, savedValue, array);
           case 'expression': return visitExpression(node1, node2, savedValue, array);
           default: return null;
         }
@@ -29,7 +37,6 @@ export default function visit(node1, node2, savedValue, array) {
   }
   return array;
 }
-
 
 function checkIfDollar(value2) {
   if (value2 !== undefined && value2.name !== undefined) {
@@ -40,32 +47,37 @@ function checkIfDollar(value2) {
 
 function checkDollarValues(userValue, rightValue, array, savedValue) {
   let value = false;
-  for (const element in savedValue) {
-    if (savedValue[element].dollarValue === rightValue.name) {
+  Object.values(savedValue).forEach((element) => {
+    if (element.dollarValue === rightValue.name) {
       value = true;
-      if (savedValue[element].correspondent !== userValue.name) {
+      if (element.correspondent !== userValue.name) {
         array.push({
-          name: userValue.name, lineNumber: userValue.lineNumber, startPosition: userValue.startPosition, endPosition: userValue.endPosition, message: `The value '${userValue.name}' is not the expected one. Use '${rightValue.name}' instead. `,
+          name: userValue.name, lineNumber: userValue.lineNumber, startPosition: userValue.startPosition, endPosition: userValue.endPosition, message: `The value '${userValue.name}' is not the expected one. Use '${element.correspondent}' instead. `,
         });
       }
     }
-  }
+  });
   if (!value) {
     savedValue.push({ dollarValue: rightValue.name, correspondent: userValue.name });
   }
 }
-
 function visitTypeSignature(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
-    for (let i = 0; i < node1.types.length; i += 1) {
-      array.concat(visit(node1.types[i], node2.types[i], savedValue, array));
+    if (node1.types.length !== node2.types.length) {
+      array.push({
+        name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected ${node2.types.length} types in the type signature instead of ${node1.types.length}. `,
+      });
+    } else {
+      for (let i = 0; i < node1.types.length; i += 1) {
+        array.concat(visit(node1.types[i], node2.types[i], savedValue, array));
+      }
+      return array;
     }
-    return array;
   }
   return array;
 }
 
-function visitFunctionDefinition(node1, node2, savedValue, array) {
+function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
   if (!node2.isUnderscore) {
     if (checkIfDollar(node2)) {
       if (node1.name.length <= 4) {
@@ -86,9 +98,16 @@ function visitFunctionDefinition(node1, node2, savedValue, array) {
     }
   }
 
-  array.concat(visit(node1.expression, node2.expression, savedValue, array));
   array.concat(visitTypeSignature(node1.typeSignature, node2.typeSignature, savedValue, array));
-
+  if (isPerfect) {
+    if (node1.patterns.length < node2.patterns.length) {
+      array.push({
+        name: '', lineNumber: node1.lineNumber, startPosition: 'The function is incomplete', endPosition: node1.endPosition, message: `Expected ${node2.patterns.length} patterns in the implementation. Found ${node1.patterns.length}. `,
+      });
+    } else {
+      return array;
+    }
+  }
   for (let i = 0; i < node1.patterns.length; i += 1) {
     array.concat(visit(node1.patterns[i], node2.patterns[i], savedValue, array));
   }
@@ -128,9 +147,17 @@ function visitPattern(node1, node2, savedValue, array) {
       });
     }
   }
+  if (node1.arguments.length !== node2.arguments.length) {
+    const { startPosition } = node1.arguments[0] || node1;
+    const { endPosition } = node1.arguments[node1.arguments.length - 1] || node1;
 
-  for (let i = 0; i < node1.arguments.length; i += 1) {
-    array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+    array.push({
+      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+    });
+  } else {
+    for (let i = 0; i < node1.arguments.length; i += 1) {
+      array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+    }
   }
   return array.concat(visit(node1.expression, node2.expression, savedValue, array));
 }
@@ -201,6 +228,15 @@ function visitFunctionName(node1, node2, savedValue, array) {
   return array;
 }
 
+function visitBool(node1, node2, savedValue, array) {
+  if (node1.value !== node2.value) {
+    array.push({
+      name: " ", lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'The value of the bool is not correct',
+    });
+  }
+  return array;
+}
+
 // eslint-disable-next-line consistent-return
 function visitExpression(node1, node2, savedValue, array) {
   if (node2.isUnderscore) return array;
@@ -208,8 +244,14 @@ function visitExpression(node1, node2, savedValue, array) {
 
 function visitFunctionApplication(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
-    for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
-      array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+    if (node1.arguments.length !== node2.arguments.length) {
+      array.push({
+        name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+      });
+    } else {
+      for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
+        array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+      }
     }
     return array.concat(visit(node1.functionName, node2.functionName, savedValue, array));
   }

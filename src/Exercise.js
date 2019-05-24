@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import './Exercise.css';
-import { parse } from './parser';
-import { parse as expressionParse } from './expressionParser';
-import visit from './visitor';
+import { parse } from './parser2';
+import { parse as expressionParse } from './parser';
 import visitWithExpression from './visitWithExpression';
 import Editor from './Editor';
 import NavBar from './NavigationBar';
+import visit from './visitor';
+import HaskellJSProgram from './hsjs/ProgramComponent';
 
 class Exercise extends Component {
   constructor(props) {
@@ -43,6 +44,7 @@ class Exercise extends Component {
   }
 
   onSubmit = () => {
+    this.updateFunctionList(this.state.value);
     const { value: inputValue, testValue } = this.state;
     fetch('/compile', {
       method: 'POST',
@@ -61,6 +63,16 @@ class Exercise extends Component {
     this.setState({ value: code });
   };
 
+  updateFunctionList = (code) => {
+    var newFunctions = parse(code)
+      //+ "\n\n", { startRule: 'functionDefinitionList' });
+    newFunctions.forEach(function (func) {
+      if ([':', '+', '-'].indexOf(func.name) < 0) {
+        window.functions[func.name] = func;
+      }
+    });
+  }
+  
   compareWithModel = (code) => {
     let errors = [];
     this.setState({ isShowingErrors: false });
@@ -86,6 +98,7 @@ class Exercise extends Component {
 
       badPatterns.forEach((exp) => {
         const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], []);
+        console.log('````````````````````````````````````````````', instructorErrors)
         if (instructorErrors.length === 0) {
           errors.push({
             name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
@@ -98,13 +111,12 @@ class Exercise extends Component {
           name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: 'Please provide a type signature',
         }];
       } else {
-        errors = [{
-          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: '',
+           errors = [{
+          name: '', startPosition: 0, endPosition: 50, lineNumber: 0, message: `Parser error: ${err}`,
         }];
       }
     }
 
-    if (errors.length === 0) errors.push({ lineNumber: 1, startPosition: 1, message: 'No errors to display at the moment!' });
     this.setState({ compilerErrors: errors });
     this.editor.displayErrors(errors);
   }
@@ -115,12 +127,20 @@ class Exercise extends Component {
     const testsToRun = tests.map((elem) => {
       const firstWord = elem.value.substr(0, elem.value.indexOf(' '));
       const second = elem.value.substr(elem.value.indexOf(' ') + 1);
-      const savedValue = savedValues.find(savedVal => savedVal.dollarValue === firstWord);
+      let savedValue;
+      if (savedValues.length !== 0) {
+        savedValue = savedValues.find(savedVal => savedVal.dollarValue === firstWord);
+      } else {
+        savedValue = null;
+      }
 
-      return savedValue ? ({
+      return savedValue && savedValue.correspondent ? ({
         ...elem,
         value: `${savedValue.correspondent} ${second}`,
-      }) : elem;
+      }) : ({
+        ...elem,
+        value: ` test ${second}`,
+      });
     });
     const inputValue = code;
     testsToRun.forEach((elem, index) => fetch('/compile', {
@@ -146,7 +166,7 @@ class Exercise extends Component {
       const { isShowingErrors } = this.state;
       return (
         <div>
-          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Show errors</button>
+          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Get hints</button>
           {isShowingErrors
             && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
           }
@@ -178,13 +198,16 @@ class Exercise extends Component {
     return (
       <div>
         <NavBar> </NavBar>
+        <HaskellJSProgram
+          defaultValue="twoSame [1,2,3, 4, 4, 5]"
+        />
         <div style={{ width: '980px', margin: 'auto' }}>
           <p className="problem">{problem}</p>
           <pre className="examples">{examples}</pre>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
             <Editor
               onChange={this.onCodeChange}
-              debounceTimeout={1000}
+              debounceTimeout={500}
               ref={(editor) => { this.editor = editor; }}
             />
             <div style={{ marginLeft: '4em' }}>
