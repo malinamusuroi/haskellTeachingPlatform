@@ -1,3 +1,7 @@
+{
+  function randomId() { return '_' + Math.random().toString(36).substr(2, 9) }
+}
+
 start
   = functionDefinitionList
 
@@ -17,6 +21,7 @@ functionDefinition
     nameEndPosition:typeSignature && typeSignature.functionName && typeSignature.functionName.endPosition,
     typeSignature: typeSignature,
     patterns: patterns,
+    isValidApplication: function(functionArguments) { return functionArguments.length === patterns[0].arguments.length}
   }; }
  
 functionDefinitionTypeSignature = functionName:functionName whitespace* "::" whitespace* head:type tail:arrowAndType* whitespace* {
@@ -51,29 +56,40 @@ functionDefinitionPatternLine
     endPosition: functionName.endPosition,
     arguments: part.arguments,
     expression: part.expression,
+    doesMatch: part.doesMatch,
+    apply: part.apply,
   }}
   / "\n"* "_" { return { kind: "pattern", isUnderscore: true } };
 
 functionDefinitionPatternPartOfLine
   = patternArguments:patternWithWhitespace* whitespace? "=" whitespace* exp:expressionWithFunction { return {
+    definitionLine: text(),
+    numberOfArguments: patternArguments.length,
     kind: "pattern",
     lineNumber: location().start.line,
     startPosition: location().start.column,
     endPosition: location().end.column,
     arguments: patternArguments,
     expression: exp,
-  }; }
+    doesMatch: function(args) {
+      for (var i=0; i<patternArguments.length; i++) {
+        if(patternArguments[i].doesMatch && !patternArguments[i].doesMatch(args[i])) return false;
+      }
+      return true;
+    },
+    apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); }
+  }; }
 
 patternWithWhitespace
   = whitespace pattern:pattern { return pattern; }
 
 pattern
-  = "[" whitespace* "]" { return { kind: "emptyListPattern", lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, value: "[]" }; }
-  / "(" whitespace* left:functionName whitespace* ":" whitespace*  right:functionName whitespace* ")" { return { kind: "listPattern", lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, left: left, right: right }; }
+  = "[" whitespace* "]" { return {id: randomId(), kind: "emptyListPattern", lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, value: "[]", doesMatch: function(arg) { return arg.kind === "list" && arg.items.length === 0}}}
+  / "(" whitespace* left:functionName whitespace* ":" whitespace*  right:functionName whitespace* ")" { return {id: randomId(), kind: "listPattern", lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, left: left, right: right, doesMatch: function(arg) { return arg.kind === "list" && arg.items.length > 0 } }; }
   / functionName
-  / integer:integer
+  / integer:integer {integer.doesMatch = function(arg) { return arg.kind === "int" && arg.value === integer.value; }; return integer; }
 
 expression
   = "(" whitespace? exp:expressionWithFunction whitespace? ")" { return { kind: "bracketedExpression", lineNumber: location().start.line, startPosition: location().start.column,
@@ -91,13 +107,13 @@ expressionWithFunction
     endPosition: location().end.column, isUnderscore: true } }
 
 functionApplication
-  = f:functionName whitespace args:expression_list {return {kind: 'functionApplication', lineNumber: location().start.line, startPosition: location().start.column,
+  = f:functionName whitespace args:expression_list {return { id: randomId(), kind: 'functionApplication', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, functionName: f, arguments: args}}
-  / "_" { return { kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column,
+  / "_" { return { id: randomId(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true } };
 
 infixFunctionApplication
-  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return {kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
+  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return { id: randomId(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
 
 expression_list
   = exp1:expression list:(whitespace_expression)* { list.unshift(exp1); return list; }
@@ -106,7 +122,7 @@ whitespace_expression
   = whitespace exp:expression { return exp; }
 
 list
-  = "[" whitespace? list:comma_expression_list? whitespace? "]" { return { kind: "list", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, items: list || [] }; }
+  = "[" whitespace? list:comma_expression_list? whitespace? "]" { return { id: randomId(), kind: "list", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, items: list || [] }; }
   / "_" { return { kind: "list", isUnderscore: true } }
 
 comma_expression_list
@@ -116,26 +132,26 @@ comma_expression
   = whitespace? "," whitespace? exp:expression { return exp; }
 
 functionName
-  = dollar:"$"? letters:[A-Za-z]+ { return { kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = dollar:"$"? letters:[A-Za-z]+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: (dollar || "") + letters.join(""), infix: false}; }
-  / "_" { return { kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
+  / "_" { return { id: randomId(), kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true } }
 
 infixFunctionName
-  = "+" { return { kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = "+" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '+', infix: true}; }
-  / "-" { return { kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  / "-" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '-', infix: true}; }
-  / ":" { return { kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  / ":" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: ':', infix: true}; }
-  / "||"{ return { kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  / "||"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '||', infix: true}; }
-  / "_" { return { kind: "functionName", isUnderscore: true } }
+  / "_" { return {id: randomId(), kind: "functionName", isUnderscore: true } }
 
 integer
-  = digits:[0-9]+ { return { kind: "int", lineNumber: location().start.line, startPosition: location().start.column,
+  = digits:[0-9]+ { return { id: randomId(),  kind: "int", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: parseInt(digits.join(""), 10)} ; }
-  / "_" { return { kind: "int", isUnderscore: true } }
+  / "_" { return { id: randomId(), kind: "int", isUnderscore: true } }
 
 whitespace
   = " "+

@@ -1,7 +1,7 @@
 import React from 'react';
 import DOM from 'react-dom-factories';
 var createReactClass = require('create-react-class');
-
+import { parse } from '../parser';
 import Node from './NodeComponent';
 
 import ReactDOM from 'react-dom';
@@ -21,7 +21,7 @@ var Line = React.createFactory(createReactClass({displayName: 'Line',
   onTextChange: function(event) {
     this.setState({textLength: event.target.value.length});
     try {
-      HaskellParser.parse(event.target.value);
+      parse(event.target.value);
       this.setState({editingError: false});
     } catch (e) {
       this.setState({editingError: e});
@@ -35,7 +35,7 @@ var Line = React.createFactory(createReactClass({displayName: 'Line',
   saveText: function(event) {
     try {
       event.preventDefault();
-      this.props.lineState.program.updateInitialAST(this.props.lineState.ast.id, HaskellParser.parse(event.target.value));
+      this.props.lineState.program.updateInitialAST(this.props.lineState.ast.id, parse(event.target.value));
       this.setState({editingError: false});
     } catch (e) {
       this.setState({editingError: e});

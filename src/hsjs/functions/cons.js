@@ -7,7 +7,7 @@ window.functions[':'] = {
   isValidApplication: function(_arguments) {
     // TODO paramaterize list time
     return _arguments.length === 2 &&
-    _arguments[1].type === 'list';
+    _arguments[1].kind === 'list';
   },
   astToString: function(_arguments) {
    return ":";
@@ -24,7 +24,7 @@ window.functions[':'] = {
 
         return {
           id: '_' + Math.random().toString(36).substr(2, 9),
-          type: 'list',
+          kind: 'list',
           items: items
         };
       }

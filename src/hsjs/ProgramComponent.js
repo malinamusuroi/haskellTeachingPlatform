@@ -1,5 +1,6 @@
 import React from 'react';
-import { parse } from './haskell-parser';
+import { parse } from '../parser';
+//import { parse } from './haskell-parser';
 import  Lines  from './LinesComponent';
 
 const _ = require('lodash');
@@ -11,8 +12,9 @@ let HaskellParser = require('./haskell-parser');
 var createReactClass = require('create-react-class');
 
 
-var HaskellJSProgram = createReactClass({displayName: 'HaskellJSProgram',
+var HaskellJSProgram = createReactClass({displayName: 'functionName',
   getInitialState: function() {
+    console.log("000000000000000000000000000000", parse(this.props.defaultValue))
     return {
       lines: [{ast: parse(this.props.defaultValue), clickedComputationId: null}],
       applicationHighlightId: null,

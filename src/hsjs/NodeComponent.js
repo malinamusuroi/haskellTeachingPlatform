@@ -7,25 +7,31 @@ import Application from './ApplicationComponent';
 import FunctionName from './FunctionNameComponent';
 import List from './ListComponent';
 import Int from './IntComponent';
-
+import Bool from './BoolComponent';
 
 var createReactClass = require('create-react-class');
 
 var Node = React.createFactory(createReactClass({displayName: 'Node',
   mixins: [NodeMixins],
   innerNode: function() {
-    const currentAST = this.currentAST();
+    let currentAST = this.currentAST();
 
-    if (currentAST.type == "application") {
+    if (currentAST.kind == 'bracketedExpression') {
+      currentAST = currentAST.expression;
+    }
+
+    if (currentAST.kind == "functionApplication") {
       return Application({lineState: this.props.lineState, id: currentAST.id});
-    } else if (currentAST.type == "functionName") {
+    } else if (currentAST.kind == "functionName") {
       return FunctionName({lineState: this.props.lineState, id: currentAST.id});
-    } else if (currentAST.type == "list") {
+    } else if (currentAST.kind == "list") {
       return List({lineState: this.props.lineState, id: currentAST.id});
-    } else if (currentAST.type == "int") {
+    } else if (currentAST.kind == "int") {
       return Int({lineState: this.props.lineState, id: currentAST.id});
+    } else if (currentAST.kind == "bool") {
+      return Bool({lineState: this.props.lineState, id: currentAST.id});
     } else {
-      return DOM.span({}, "cannot handle ast of this type");
+      return DOM.span({}, "cannot handle ast of this kind");
     }
   },
   render: function() {

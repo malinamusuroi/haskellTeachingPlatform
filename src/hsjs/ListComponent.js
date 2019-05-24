@@ -1,9 +1,13 @@
 import React from 'react';
 import NodeMixins from './Mixins';
+import DOM from 'react-dom-factories';
+import ReactDOM from 'react-dom';
+import Node from './NodeComponent';
+import { parse } from '../parser';
 
 var createReactClass = require('create-react-class');
 
-var List = createReactClass({displayName: 'List',
+var List = React.createFactory(createReactClass({displayName: 'List',
   mixins: [NodeMixins],
   getInitialState: function() {
     return {editingError: false, textLength: null};
@@ -11,7 +15,7 @@ var List = createReactClass({displayName: 'List',
   onTextChange: function(event) {
     this.setState({textLength: event.target.value.length});
     try {
-      HaskellParser.parse(event.target.value);
+      parse(event.target.value);
       this.setState({editingError: false});
     } catch (e) {
       this.setState({editingError: true});
@@ -28,7 +32,7 @@ var List = createReactClass({displayName: 'List',
     if (event.keyCode === 13) {
       try {
         event.preventDefault();
-        this.props.lineState.program.updateInitialAST(this.currentAST().id, HaskellParser.parse(event.target.value));
+        this.props.lineState.program.updateInitialAST(this.currentAST().id, parse(event.target.value));
         this.setState({editingError: false});
       } catch (e) {
         this.setState({editingError: true});
@@ -40,7 +44,7 @@ var List = createReactClass({displayName: 'List',
   },
   render: function() {
     if (this.props.lineState.editing) {
-      return React.DOM.input({
+      return DOM.input({
         defaultValue: this.listText(),
         onClick: function(event){event.stopPropagation();},
         onChange: this.onTextChange,
@@ -58,9 +62,9 @@ var List = createReactClass({displayName: 'List',
         if (i<listItems.length-1) items.push(',');
       }
       items.push(']');
-      return React.DOM.span({className: "list"}, items);
+      return DOM.span({className: "list"}, items);
     }
   }
-});
+}));
 
 export default List;

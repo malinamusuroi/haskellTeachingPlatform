@@ -1,6 +1,7 @@
 import React from 'react';
 
 var createReactClass = require('create-react-class');
+import { parse } from '../parser';
 
 var FunctionEditor = createReactClass({displayName: 'FunctionEditor',
   getInitialState: function() {
@@ -72,10 +73,12 @@ var FunctionEditor = createReactClass({displayName: 'FunctionEditor',
     window.functions = {
       ':': window.functions[':'],
       '+': window.functions['+'],
-      '-': window.functions['-']
+      '-': window.functions['-'],
+      'elem': window.functions['elem'],
+      '||': window.functions['||'],
     };
 
-    var newFunctions = HaskellParser.parse(text + "\n\n", {startRule: 'functionDefinitionList'});
+    var newFunctions = parse(text + "\n\n", {startRule: 'functionDefinitionList'});
     newFunctions.forEach(function(func) {
       if ([':', '+', '-'].indexOf(func.name) < 0) {
         window.functions[func.name] = func;

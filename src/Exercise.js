@@ -1,11 +1,14 @@
 import React, { Component } from 'react';
 import './Exercise.css';
-import { parse } from './parser';
-import { parse as expressionParse } from './expressionParser';
+import { parse  as parse2} from './parser2';
+//import { parse as expressionParse } from './expressionParser';
 import visitWithExpression from './visitWithExpression';
 import Editor from './Editor';
 import NavBar from './NavigationBar';
 import visit from './visitor';
+import HaskellJSProgram from './hsjs/ProgramComponent';
+
+import {parse} from './hsjs/haskell-parser';
 
 class Exercise extends Component {
   constructor(props) {
@@ -56,56 +59,70 @@ class Exercise extends Component {
   }
 
   onCodeChange = (code) => {
+    this.updateFunctionList(code);
     this.compareWithModel(code);
     this.runTests(code);
     this.setState({ value: code });
   };
 
+  updateFunctionList = (code) => {
+    console.log("11111111111111111111111111111", parse2(code));
+    var newFunctions = parse2(code)
+      //+ "\n\n", { startRule: 'functionDefinitionList' });
+    newFunctions.forEach(function (func) {
+      if ([':', '+', '-'].indexOf(func.name) < 0) {
+        window.functions[func.name] = func;
+      }
+    });
+  }
+
+  
   compareWithModel = (code) => {
     let errors = [];
     this.setState({ isShowingErrors: false });
 
-    try {
-      parse(code);
-      const savedValues = [];
-      const { correctModel, badExpressions, badPatterns } = this.state;
-      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, []);
-      this.setState({ savedValues });
-      badExpressions.forEach((exp) => {
-        let instructorErrors = visitWithExpression(parse(code)[0], expressionParse(exp.pattern), [])
-          .filter(error => error != null);
+    // try {
+    //   parse(code);
+    //   const savedValues = [];
+    //   const { correctModel, badExpressions, badPatterns } = this.state;
+    //   errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, []);
+    //   this.setState({ savedValues });
+    //   badExpressions.forEach((exp) => {
+    //     let instructorErrors = visitWithExpression(parse(code)[0], expressionParse(exp.pattern), [])
+    //       .filter(error => error != null);
 
-        if (instructorErrors.length !== 0) {
-          instructorErrors = instructorErrors.map(err => ({
-            ...err,
-            message: exp.message,
-          }));
-        }
-        errors = errors.concat(instructorErrors);
-      });
+    //     if (instructorErrors.length !== 0) {
+    //       instructorErrors = instructorErrors.map(err => ({
+    //         ...err,
+    //         message: exp.message,
+    //       }));
+    //     }
+    //     errors = errors.concat(instructorErrors);
+    //   });
 
-      badPatterns.forEach((exp) => {
-        const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], [], true);
-        if (instructorErrors.length === 0) {
-          errors.push({
-            name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
-          });
-        }
-      });
-    } catch (err) {
-      if (err.toString().includes('::')) {
-        errors = [{
-          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: 'Please provide a type signature',
-        }];
-      } else {
-        errors = [{
-          name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: err,
-        }];
-      }
-    }
+    //   badPatterns.forEach((exp) => {
+    //     const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], [], true);
+    //     console.log('````````````````````````````````````````````', instructorErrors)
+    //     if (instructorErrors.length === 0) {
+    //       errors.push({
+    //         name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
+    //       });
+    //     }
+    //   });
+    // } catch (err) {
+    //   if (err.toString().includes('::')) {
+    //     errors = [{
+    //       name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: 'Please provide a type signature',
+    //     }];
+    //   } else {
+    //     errors = [{
+    //       name: '', startPosition: err.location.start.column, endPosition: 50, lineNumber: err.location.start.line, message: `Parser error: ${err}`,
+    //     }];
+    //   }
+    // }
 
-    this.setState({ compilerErrors: errors });
-    this.editor.displayErrors(errors);
+    // this.setState({ compilerErrors: errors });
+    // this.editor.displayErrors(errors);
   }
 
   runTests = (code) => {
@@ -185,6 +202,9 @@ class Exercise extends Component {
     return (
       <div>
         <NavBar> </NavBar>
+        <HaskellJSProgram
+          defaultValue="twoSame [1,2,3, 4, 4, 5]"
+        />
         <div style={{ width: '980px', margin: 'auto' }}>
           <p className="problem">{problem}</p>
           <pre className="examples">{examples}</pre>

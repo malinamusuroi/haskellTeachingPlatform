@@ -6,13 +6,16 @@ const _ = require('lodash');
 require('./functions/plus');
 require('./functions/minus');
 require('./functions/cons');
+require('./functions/elem');
+require('./functions/or');
 
 var _isValidApplication = function(functionName, _arguments) {  // TODO REMOVE THIS METHOD
-  if (window.functions[functionName] != undefined){
-    return window.functions[functionName].isValidApplication(_arguments);
-  } else {
-    return false;
-  }
+  // if (window.functions[functionName] != undefined){
+  //   return window.functions[functionName].isValidApplication(_arguments);
+  // } else {
+  //   return false;
+  // }
+  return true;
 };
 
 var _matchingPatternIndex = function(func, _arguments){
@@ -25,15 +28,18 @@ var _matchingPatternIndex = function(func, _arguments){
 };
 
 var _verifyApplication = function(node) {
-  if (node.type !== 'application') {
+  let node2 = node.kind === 'bracketedExpression' ? node.expression : node;
+
+  if (node2.kind !== 'functionApplication') {
     throw 'node needs to be an application';
   }
 
-  if (!_isValidApplication(node.functionName.name, node.arguments)) {
+  console.log("isVALidAPPPPPPPppp", node2.functionName.name, node2.arguments)
+  if (!_isValidApplication(node2.functionName.name, node2.arguments)) {
     throw 'invalid application';
   }
 
-  if (!window.functions[node.functionName.name]) {
+  if (!window.functions[node2.functionName.name]) {
     throw 'function not defined for application';
   }
 };
@@ -67,23 +73,23 @@ var _convertListPatternToSeparateArguments = function(patternArguments, function
   for (var i=0; i<patternArguments.length; i++) {
     var patternArgument = patternArguments[i];
     var functionArgument = functionArguments[i];
-    if (patternArgument.type === 'functionName') {
+    if (patternArgument.kind === 'functionName') {
       newPatternArguments.push(patternArgument);
       newFunctionArguments.push(functionArgument);
-    } else if (patternArgument.type === 'emptyListPattern') {
-      if (functionArgument.type !== 'list' || functionArgument.items.length !== 0) {
+    } else if (patternArgument.kind === 'emptyListPattern') {
+      if (functionArgument.kind !== 'list' || functionArgument.items.length !== 0) {
         throw 'invalid empty list pattern';
       }
-    } else if (patternArgument.type === 'listPattern') {
-      if (functionArgument.type !== 'list' || functionArgument.items.length <= 0) {
+    } else if (patternArgument.kind === 'listPattern') {
+      if (functionArgument.kind !== 'list' || functionArgument.items.length <= 0) {
         throw 'invalid list pattern';
       }
       newPatternArguments.push(patternArgument.left);
       newFunctionArguments.push(functionArgument.items[0]);
       newPatternArguments.push(patternArgument.right);
       newFunctionArguments.push({
-        id: uuid.v4(),
-        type: 'list',
+        id: '_' + Math.random().toString(36).substr(2, 9),
+        kind: 'list',
         items: functionArgument.items.slice(1)
       });
     }
@@ -94,17 +100,22 @@ var _convertListPatternToSeparateArguments = function(patternArguments, function
 
 function _fillInArgumentsInternal(AST, patternArguments, functionArguments) {
   var newAST = _giveDifferentIds(_.cloneDeep(AST));
-  if (newAST.type === 'functionName' && _.pluck(patternArguments, 'name').indexOf(newAST.name) >= 0) {
-    newAST = _giveDifferentIds(_.cloneDeep(functionArguments[_.pluck(patternArguments, 'name').indexOf(newAST.name)]));
-    newAST.id = uuid.v4();
+
+  if (newAST.kind === 'bracketedExpression') {
+    newAST = newAST.expression;
+  }
+
+  if (newAST.kind === 'functionName' && _.map(patternArguments, 'name').indexOf(newAST.name) >= 0) {
+    newAST = _giveDifferentIds(_.cloneDeep(functionArguments[_.map(patternArguments, 'name').indexOf(newAST.name)]));
+    newAST.id = '_' + Math.random().toString(36).substr(2, 9);
   } else if (_.isArray(newAST)) {
     newAST = newAST.map(function(item) {
       return _fillInArgumentsInternal(item, patternArguments, functionArguments);
     });
-  } else if (newAST.type === 'application') {
+  } else if (newAST.kind === 'functionApplication') {
     newAST.functionName = _fillInArgumentsInternal(newAST.functionName, patternArguments, functionArguments);
     newAST.arguments = _fillInArgumentsInternal(newAST.arguments, patternArguments, functionArguments);
-  } else if (newAST.type === 'list') {
+  } else if (newAST.kind === 'list') {
     newAST.items = _fillInArgumentsInternal(newAST.items, patternArguments, functionArguments);
   }
   return newAST;
@@ -134,7 +145,7 @@ window.ASTTransformations = {
   },
 
   isApplicable: function(node) {
-    return node.type === 'application' &&
+    return node.kind === 'functionApplication' &&
            _isValidApplication(node.functionName.name, node.arguments);
   },
 
@@ -180,10 +191,10 @@ window.ASTTransformations = {
   astToString: function(node) {
     var astNodeTypes = Object.keys(window.astNodeTypes);
 
-    if ((astNodeTypes.indexOf(node.type)) >= 0){
-      return window.astNodeTypes[node.type].astToString(node);
+    if ((astNodeTypes.indexOf(node.kind)) >= 0){
+      return window.astNodeTypes[node.kind].astToString(node);
     } else {
-      throw "cannot convert type '" + node.type + "' to String";
+      throw "cannot convert type '" + node.kind + "' to String";
     }
   },
 

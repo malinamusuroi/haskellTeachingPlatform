@@ -2,14 +2,20 @@
 /* eslint-disable no-use-before-define */
 export default function visit(node1, node2, savedValue, array, isPerfect) {
   if (node1 !== undefined && node1.kind !== undefined) {
-    if (node2.isUnderscore) {
+    if (!node2 || node2.isUnderscore) {
       return array;
     }
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
-        array.push({
-          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
-        });
+        if (node1.kind === 'bracketedExpression') {
+          node1 = node1.expression;
+        } else if (node2.kind === 'bracketedExpression') {
+          node2 = node2.expression;
+        } else {
+          array.push({
+            name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
+          });
+        }
       } else {
         switch (node1.kind) {
           case 'functionDefinition': return visitFunctionDefinition(node1, node2, savedValue, array, isPerfect);
@@ -93,10 +99,12 @@ function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
 
   array.concat(visitTypeSignature(node1.typeSignature, node2.typeSignature, savedValue, array));
   if (isPerfect) {
-    if (node1.patterns.length !== node2.patterns.length) {
+    if (node1.patterns.length < node2.patterns.length) {
       array.push({
         name: '', lineNumber: node1.lineNumber, startPosition: 'The function is incomplete', endPosition: node1.endPosition, message: `Expected ${node2.patterns.length} patterns in the implementation. Found ${node1.patterns.length}. `,
       });
+    } else {
+      return array;
     }
   }
   for (let i = 0; i < node1.patterns.length; i += 1) {
