@@ -28,6 +28,7 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
           case 'bracketedExpression': return visitBracketedexpression(node1, node2, savedValue, array);
           case 'arrayType': return visitArrayType(node1, node2, savedValue, array);
           case 'type': return visitType(node1, node2, savedValue, array);
+          case 'bool': return visitBool(node1, node2, savedValue, array);
           case 'expression': return visitExpression(node1, node2, savedValue, array);
           default: return null;
         }
@@ -223,6 +224,15 @@ function visitFunctionName(node1, node2, savedValue, array) {
       });
     }
     return array;
+  }
+  return array;
+}
+
+function visitBool(node1, node2, savedValue, array) {
+  if (node1.value !== node2.value) {
+    array.push({
+      name: " ", lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'The value of the bool is not correct',
+    });
   }
   return array;
 }
