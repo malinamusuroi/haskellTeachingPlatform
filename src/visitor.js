@@ -211,6 +211,7 @@ function visitListPattern(node1, node2, savedValue, array) {
 
 function visitFunctionName(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
+    
     if (checkIfDollar(node2)) {
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.name !== node2.name) {

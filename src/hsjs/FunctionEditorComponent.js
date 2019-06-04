@@ -76,6 +76,7 @@ var FunctionEditor = createReactClass({displayName: 'FunctionEditor',
       '-': window.functions['-'],
       'elem': window.functions['elem'],
       '||': window.functions['||'],
+      'sum': window.functions['sum'],
     };
 
     var newFunctions = parse(text + "\n\n", {startRule: 'functionDefinitionList'});

@@ -22,6 +22,7 @@ class Exercise extends Component {
       correctModel: '',
       badPatterns: '',
       savedValues: '',
+      val: '',
     };
   }
 
@@ -52,7 +53,14 @@ class Exercise extends Component {
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then(res => res.json()).then(result => this.setState({ data: result.body }))
+    }).then(res => res.json()).then(result => {
+      this.setState({ data: result.body })
+      this.setState({val: (<div>
+      <HaskellJSProgram
+        defaultValue={this.state.testValue}
+      />
+    </div>) })
+    })
       // eslint-disable-next-line no-console
       .catch(console.error);
   }
@@ -98,7 +106,6 @@ class Exercise extends Component {
 
       badPatterns.forEach((exp) => {
         const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], []);
-        console.log('````````````````````````````````````````````', instructorErrors)
         if (instructorErrors.length === 0) {
           errors.push({
             name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
@@ -111,7 +118,7 @@ class Exercise extends Component {
           name: '', startPosition: 1, endPosition: 50, lineNumber: 1, message: 'Please provide a type signature',
         }];
       } else {
-           errors = [{
+        errors = [{
           name: '', startPosition: 0, endPosition: 50, lineNumber: 0, message: `Parser error: ${err}`,
         }];
       }
@@ -153,7 +160,7 @@ class Exercise extends Component {
       if (!result.isError) {
         testsToRun[index].result = result.body.includes(elem.match);
       } else {
-        testsToRun[index].result = false;
+        testsToRun[index].result = 'compiler error';
       }
       this.setState({ results: testsToRun });
     }));
@@ -165,7 +172,7 @@ class Exercise extends Component {
     if (compilerErrors !== undefined && compilerErrors.length !== 0) {
       const { isShowingErrors } = this.state;
       return (
-        <div>
+        <div style={{ marginLeft: '9px', marginTop: '-80px' }}>
           <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Get hints</button>
           {isShowingErrors
             && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
@@ -178,12 +185,20 @@ class Exercise extends Component {
 
   renderTests = () => {
     const { results } = this.state;
-    return results.map(elem => (
-      <div key={elem.value} className="results">
+    return results.map(elem => {
+      let val;
+      if (elem.result === true) {
+        val = '✅'
+      } else if (elem.result === false) {
+        val = '❌'
+      } else {
+        val = '⚠️ Compiler Error: The tests cannot be run'
+      }
+      return <div key={elem.value} className="results">
         <pre>{elem.value}</pre>
-        {elem.result !== '' && elem.value !== undefined && <span>{elem.result === true ? '✅' : '❌'}</span>}
+        {elem.result !== '' && elem.value !== undefined && <span>{val}</span>}
       </div>
-    ));
+    });
   }
 
   render() {
@@ -193,24 +208,23 @@ class Exercise extends Component {
       data,
       results,
       examples,
+      val,
     } = this.state;
+
 
     return (
       <div>
         <NavBar> </NavBar>
-        <HaskellJSProgram
-          defaultValue="twoSame [1,2,3, 4, 4, 5]"
-        />
-        <div style={{ width: '980px', margin: 'auto' }}>
+        <div style={{ width: '980px', margin: '50px', marginBottom: '90px' }}>
           <p className="problem">{problem}</p>
           <pre className="examples">{examples}</pre>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', width: '800px' }}>
             <Editor
               onChange={this.onCodeChange}
               debounceTimeout={500}
               ref={(editor) => { this.editor = editor; }}
             />
-            <div style={{ marginLeft: '4em' }}>
+            <div style={{ marginLeft: '2em' }}>
               <p> Test your program: </p>
               <textarea type="text" id="name" className="test-area" value={testValue} onChange={this.handleValue} />
               <div className="result">
@@ -219,6 +233,7 @@ class Exercise extends Component {
               </div>
             </div>
           </div>
+          {val}
           <div style={{ display: 'flex' }}>
             <div>
               {this.renderErrors()}

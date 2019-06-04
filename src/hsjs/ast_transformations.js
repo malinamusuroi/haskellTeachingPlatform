@@ -34,7 +34,7 @@ var _verifyApplication = function(node) {
     throw 'node needs to be an application';
   }
 
-  console.log("isVALidAPPPPPPPppp", node2.functionName.name, node2.arguments)
+  console.log("isVALidAPPPPPPPppp", node2.kind, node2.functionName.name, node2.arguments)
   if (!_isValidApplication(node2.functionName.name, node2.arguments)) {
     throw 'invalid application';
   }
@@ -153,16 +153,17 @@ window.ASTTransformations = {
     var node = ASTTransformations.subtreeById(AST, id);
     if (!node) return '';
     _verifyApplication(node);
+    return ' '
 
-    var func = window.functions[node.functionName.name];
-    var index = _matchingPatternIndex(func, node.arguments);
-    var functionName = '<em>' + (func.infix ? '(' : '') + func.name + (func.infix ? ')' : '') + '</em>';
+    // var func = window.functions[node.functionName.name];
+    // var index = _matchingPatternIndex(func, node.arguments);
+    // var functionName = '<em>' + (func.infix ? '(' : '') + func.name + (func.infix ? ')' : '') + '</em>';
 
-    var html = functionName + ' :: ' + func.typeSignature;
-    if (func.patterns[index].definitionLine) {
-      html += '<br>' + functionName + ' ' + func.patterns[index].definitionLine
-    }
-    return html;
+    // //var html = functionName + ' :: ' + func.typeSignature;
+    // if (func.patterns[index].definitionLine) {
+    //  // html += '<br>' + functionName + ' ' + func.patterns[index].definitionLine
+    // }
+    // return html;
   },
 
   replaceSubtree: function(oldAST, id, newSubtree) {

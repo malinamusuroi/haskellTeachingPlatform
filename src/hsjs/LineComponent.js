@@ -65,16 +65,16 @@ var Line = React.createFactory(createReactClass({displayName: 'Line',
       lineContext = LineContext({lineState: this.props.lineState, key: 2});
     }
     if (this.props.lineState.index === 0 && !this.props.lineState.editing) {
-      lineEditButton = DOM.span({
-        className: 'lines-edit',
-        onClick: this.props.lineState.program.editFirstLine,
-        key: 3
-      }, '(edit)');
-      lineClearButton = DOM.span({
-        className: 'lines-edit',
-        onClick: this.props.lineState.program.clearProgram,
-        key: 4
-      }, '(clear)');
+      // lineEditButton = DOM.span({
+      //   className: 'lines-edit',
+      //   onClick: this.props.lineState.program.editFirstLine,
+      //   key: 3
+      // }, '(edit)');
+      // lineClearButton = DOM.span({
+      //   className: 'lines-edit',
+      //   onClick: this.props.lineState.program.clearProgram,
+      //   key: 4
+      // }, '(clear)');
     }
 
     var errorDiv;
