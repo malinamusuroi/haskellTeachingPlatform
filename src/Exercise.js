@@ -172,7 +172,7 @@ class Exercise extends Component {
     if (compilerErrors !== undefined && compilerErrors.length !== 0) {
       const { isShowingErrors } = this.state;
       return (
-        <div style={{ marginLeft: '9px', marginTop: '-80px' }}>
+        <div style={{ marginLeft: '9px'}}>
           <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Get hints</button>
           {isShowingErrors
             && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>

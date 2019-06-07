@@ -211,7 +211,6 @@ function visitListPattern(node1, node2, savedValue, array) {
 
 function visitFunctionName(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
-    
     if (checkIfDollar(node2)) {
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.name !== node2.name) {
@@ -250,13 +249,61 @@ function visitFunctionApplication(node1, node2, savedValue, array) {
         name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
       });
     } else {
-      for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
-        array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+      if (node1.functionName.name === '||') {
+        const errors = commutativeCompare(node1, node2, savedValue, []);
+        if (errors.length !== 0) {
+          array.push(errors[0]);
+        }
+      } else {
+        for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
+          array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+        }
       }
     }
     return array.concat(visit(node1.functionName, node2.functionName, savedValue, array));
   }
   return array;
+}
+
+function commutativeCompare(node1, node2, savedValue) {
+  const arguments1 = [...node1.arguments];
+  const arguments2 = [...node2.arguments];
+
+  while (arguments1.length !== 0 && arguments2.length !== 0) {
+    const firstArgument = arguments1[0];
+    const matchingIndex = arguments2.findIndex((arg) => {
+      return visit(firstArgument, arg, savedValue, []).length === 0;
+    });
+    if (matchingIndex !== -1) {
+      arguments1.splice(0, 1); // Remove the first argument.
+      arguments2.splice(matchingIndex, 1); // Remove the matching argument.
+    } else {
+
+      return [
+        {
+          name: firstArgument.name,
+          lineNumber: firstArgument.lineNumber,
+          startPosition: firstArgument.startPosition,
+          endPosition: firstArgument.endPosition,
+          message: `Incorrect argument list.`,
+        },
+      ];
+    }
+  }
+
+  if (arguments1.length !== arguments2.length) {
+    return [
+      {
+        name: node1.name,
+        lineNumber: node1.lineNumber,
+        startPosition: node1.startPosition,
+        endPosition: node1.endPosition,
+        message: `Incorrect argument list.`,
+      },
+    ];
+  }
+
+  return [];
 }
 
 function visitBracketedexpression(node1, node2, savedValue, array) {
