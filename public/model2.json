@@ -1,0 +1,41 @@
+{
+    "problem": "Write a function which returns True if a list contains at least a duplicate.",
+    "examples": "Input: [3, 4, 2]. Output: False. There are no 2 elements the same.
+                \nInput: [4, 3, 4]. Output: True. The first and the last elements are the same.",
+    "model": "$a :: [Int] -> Int\n$a [] = 0\n$a (x:xs) = _ + $a _",
+    "wrongExpression": [
+        {
+            "pattern": "_ || False",
+            "message": "This computation is redundant"
+        },
+        {
+            "pattern": "tail _",
+            "message": "Don't use tail. Instead, use pattern matching."
+        }
+    ],
+    "wrongPatterns": [
+        {
+            "pattern": "_\nsumOfElem [] = 1_",
+            "message": "Since there are no elements, the sum of the elements in the list is 0, not 1",
+            "lineNumber": 2
+        }
+    ],
+    "tests": [
+        {
+         "value": "$a []",
+         "match": "0",
+         "result": ""
+        },
+        {
+            "value": "$a [3, 4, 3]",
+            "match": "10",
+            "result": ""
+        },
+        {
+            "value": "$a [3, 4, 5, 6, 7, 3, 7, 9]",
+            "match": "54",
+            "result": ""
+        }
+    ]
+}
+

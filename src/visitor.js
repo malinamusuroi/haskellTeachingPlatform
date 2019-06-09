@@ -7,15 +7,9 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
     }
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
-        if (node1.kind === 'bracketedExpression') {
-          node1 = node1.expression;
-        } else if (node2.kind === 'bracketedExpression') {
-          node2 = node2.expression;
-        } else {
-          array.push({
-            name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
-          });
-        }
+        array.push({
+          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
+        });
       } else {
         switch (node1.kind) {
           case 'functionDefinition': return visitFunctionDefinition(node1, node2, savedValue, array, isPerfect);
@@ -104,8 +98,6 @@ function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
       array.push({
         name: '', lineNumber: node1.lineNumber, startPosition: 'The function is incomplete', endPosition: node1.endPosition, message: `Expected ${node2.patterns.length} patterns in the implementation. Found ${node1.patterns.length}. `,
       });
-    } else {
-      return array;
     }
   }
   for (let i = 0; i < node1.patterns.length; i += 1) {
@@ -252,7 +244,7 @@ function visitFunctionApplication(node1, node2, savedValue, array) {
       if (node1.functionName.name === '||') {
         const errors = commutativeCompare(node1, node2, savedValue, []);
         if (errors.length !== 0) {
-          array.push(errors[0]);
+          errors.forEach(error => array.push(error));
         }
       } else {
         for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
@@ -269,26 +261,44 @@ function commutativeCompare(node1, node2, savedValue) {
   const arguments1 = [...node1.arguments];
   const arguments2 = [...node2.arguments];
 
+  let errors = [];
+
   while (arguments1.length !== 0 && arguments2.length !== 0) {
     const firstArgument = arguments1[0];
-    const matchingIndex = arguments2.findIndex((arg) => {
-      return visit(firstArgument, arg, savedValue, []).length === 0;
-    });
+    const matchingIndex = arguments2.findIndex(arg => (
+      visit(firstArgument, arg, savedValue, []).length === 0
+    ));
     if (matchingIndex !== -1) {
-      arguments1.splice(0, 1); // Remove the first argument.
       arguments2.splice(matchingIndex, 1); // Remove the matching argument.
     } else {
-
-      return [
+      errors = errors.concat([
         {
           name: firstArgument.name,
           lineNumber: firstArgument.lineNumber,
           startPosition: firstArgument.startPosition,
           endPosition: firstArgument.endPosition,
-          message: `Incorrect argument list.`,
+          message: 'Incorrect argument.',
+        },
+      ]);
+    }
+    arguments1.splice(0, 1); // Remove the first argument.
+  }
+
+  if (errors.length > 0) {
+    if (errors.length > 1) {
+      return [
+        {
+          name: node1.name,
+          lineNumber: node1.lineNumber,
+          startPosition: node1.startPosition,
+          endPosition: node1.endPosition,
+          message: `Incorrect argument list. Expected '${node2.text}'`,
         },
       ];
     }
+    errors[0].message = `Incorrect argument. Did you mean '${arguments2[0].text}'?`;
+
+    return errors;
   }
 
   if (arguments1.length !== arguments2.length) {
@@ -298,7 +308,7 @@ function commutativeCompare(node1, node2, savedValue) {
         lineNumber: node1.lineNumber,
         startPosition: node1.startPosition,
         endPosition: node1.endPosition,
-        message: `Incorrect argument list.`,
+        message: 'Incorrect argument list.',
       },
     ];
   }

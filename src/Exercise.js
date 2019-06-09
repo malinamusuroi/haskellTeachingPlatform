@@ -86,14 +86,27 @@ class Exercise extends Component {
     this.setState({ isShowingErrors: false });
 
     try {
+      console.time('parse');
       parse(code);
+      console.timeEnd('parse');
       const savedValues = [];
       const { correctModel, badExpressions, badPatterns } = this.state;
-      errors = visit(parse(code)[0], parse(correctModel)[0], savedValues, []);
+      const parse1 = parse(code)[0];
+      const parse2 = parse(correctModel)[0];
+
+      console.time('visit');
+      errors = visit(parse1, parse2, savedValues, []);
+      console.timeEnd('visit');
+
       this.setState({ savedValues });
       badExpressions.forEach((exp) => {
-        let instructorErrors = visitWithExpression(parse(code)[0], expressionParse(exp.pattern), [])
+        const parse3 = parse(code)[0];
+        const parse4 = expressionParse(exp.pattern);
+
+        console.time('visitWithExpression');
+        let instructorErrors = visitWithExpression(parse3, parse4, [])
           .filter(error => error != null);
+        console.timeEnd('visitWithExpression');
 
         if (instructorErrors.length !== 0) {
           instructorErrors = instructorErrors.map(err => ({

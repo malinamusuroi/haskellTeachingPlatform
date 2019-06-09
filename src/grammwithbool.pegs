@@ -21,7 +21,8 @@ functionDefinition
     nameEndPosition:typeSignature && typeSignature.functionName && typeSignature.functionName.endPosition,
     typeSignature: typeSignature,
     patterns: patterns,
-    isValidApplication: function(functionArguments) { return functionArguments.length === patterns[0].arguments.length}
+    isValidApplication: function(functionArguments) { return functionArguments.length === patterns[0].arguments.length},
+    text: text()
   }; }
  
 functionDefinitionTypeSignature = functionName:functionName whitespace* "::" whitespace* head:type tail:arrowAndType* whitespace* {
@@ -31,10 +32,11 @@ functionDefinitionTypeSignature = functionName:functionName whitespace* "::" whi
         startPosition: location().start.column,
         endPosition: location().end.column,
     	types: [head].concat(tail),
-        functionName: functionName
+        functionName: functionName,
+        text: text()
     }
 }
-/ "_" { return { kind: "typeSignature", isUnderscore: true } }
+/ "_" { return { kind: "typeSignature", isUnderscore: true, text: text() } }
 
 arrayType = "["whitespace* type:type whitespace* "]" { return { kind: "arrayType", name: type.name, lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: type.isUnderscore } }
@@ -77,7 +79,8 @@ functionDefinitionPatternPartOfLine
       }
       return true;
     },
-    apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); }
+    apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); },
+    text: text()
   }; }
 
 patternWithWhitespace
@@ -85,9 +88,9 @@ patternWithWhitespace
 
 pattern
   = "[" whitespace* "]" { return {id: randomId(), kind: "emptyListPattern", lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, value: "[]", doesMatch: function(arg) { return arg.kind === "list" && arg.items.length === 0}}}
+    endPosition: location().end.column, value: "[]", text: text(), doesMatch: function(arg) { return arg.kind === "list" && arg.items.length === 0}}}
   / "(" whitespace* left:functionName whitespace* ":" whitespace*  right:functionName whitespace* ")" { return {id: randomId(), kind: "listPattern", lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, left: left, right: right, doesMatch: function(arg) { return arg.kind === "list" && arg.items.length > 0 } }; }
+    endPosition: location().end.column, left: left, right: right, text: text(), doesMatch: function(arg) { return arg.kind === "list" && arg.items.length > 0 } }; }
   / functionName
   / integer:integer {integer.doesMatch = function(arg) { return arg.kind === "int" && arg.value === integer.value; }; return integer; }
   / bool:bool {integer.doesMatch = function(arg) { return arg.kind === "bool" && arg.value === bool.value; }; return bool; }
@@ -100,7 +103,8 @@ expression
 	    endPosition: location().end.column, 
     	expression: exp,
         functionName: exp.functionName,
-        arguments: exp.arguments
+        arguments: exp.arguments,
+        text: text()
      }}
   / list
   / integer
@@ -113,16 +117,16 @@ expressionWithFunction
   / functionApplication
   / expression
   / "_" { return { kind: "expression",lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, isUnderscore: true } }
+    endPosition: location().end.column, isUnderscore: true, text: text() } }
 
 functionApplication
   = f:functionName whitespace args:expression_list {return { id: randomId(), kind: 'functionApplication', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, functionName: f, arguments: args}}
-  / "_" { return { id: randomId(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, functionName: f, arguments: args, text: text()}}
+  / "_" { return { id: randomId(), text: text(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true } };
 
 infixFunctionApplication
-  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return { id: randomId(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
+  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return { id: randomId(), text: text(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
 
 expression_list
   = exp1:expression list:(whitespace_expression)* { list.unshift(exp1); return list; }
@@ -131,8 +135,8 @@ whitespace_expression
   = whitespace exp:expression { return exp; }
 
 list
-  = "[" whitespace? list:comma_expression_list? whitespace? "]" { return { id: randomId(), kind: "list", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, items: list || [] }; }
-  / "_" { return { kind: "list", isUnderscore: true } }
+  = "[" whitespace? list:comma_expression_list? whitespace? "]" { return { id: randomId(), text: text(), kind: "list", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, items: list || [] }; }
+  / "_" { return { kind: "list", isUnderscore: true, text: text() } }
 
 comma_expression_list
   = exp1:expression list:(comma_expression)* { list.unshift(exp1); return list; }
@@ -142,30 +146,30 @@ comma_expression
 
 functionName
   = dollar:"$"? letters:[A-Za-z]+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, name: (dollar || "") + letters.join(""), infix: false}; }
+    endPosition: location().end.column, name: (dollar || "") + letters.join(""), infix: false, text: text()}; }
   / "_" { return { id: randomId(), kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, isUnderscore: true } }
+    endPosition: location().end.column, isUnderscore: true, text: text() } }
 
 infixFunctionName
   = "+" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, name: '+', infix: true}; }
+    endPosition: location().end.column, name: '+', infix: true, text: text()}; }
   / "-" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, name: '-', infix: true}; }
+    endPosition: location().end.column, name: '-', infix: true, text: text()}; }
   / ":" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, name: ':', infix: true}; }
+    endPosition: location().end.column, name: ':', infix: true, text: text()}; }
   / "||"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, name: '||', infix: true}; }
+    endPosition: location().end.column, name: '||', infix: true, text: text()}; }
   / "_" { return {id: randomId(), kind: "functionName", isUnderscore: true } }
 
 integer
-  = digits:[0-9]+ { return { id: randomId(),  kind: "int", lineNumber: location().start.line, startPosition: location().start.column,
+  = digits:[0-9]+ { return { id: randomId(),  text: text(), kind: "int", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: parseInt(digits.join(""), 10)} ; }
-  / "_" { return { id: randomId(), kind: "int", isUnderscore: true } }
+  / "_" { return { id: randomId(), kind: "int", isUnderscore: true, text: text() } }
 
 bool
-  = 'False' { return { id: randomId(),  kind: "bool", lineNumber: location().start.line, startPosition: location().start.column,
+  = 'False' { return { id: randomId(),  text: text(), kind: "bool", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: 'False' }} /
-    'True' { return { id: randomId(),  kind: "bool", lineNumber: location().start.line, startPosition: location().start.column,
+    'True' { return { id: randomId(),  text: text(), kind: "bool", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: 'True' }}
 whitespace
   = " "+
