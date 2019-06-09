@@ -14,6 +14,8 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
         switch (node1.kind) {
           case 'functionDefinition': return visitFunctionDefinition(node1, node2, savedValue, array, isPerfect);
           case 'pattern': return visitPattern(node1, node2, savedValue, array);
+          case 'patternGuards': return visitPatternGuards(node1, node2, savedValue, array);
+          case 'patternGuard': return visitPatternGuard(node1, node2, savedValue, array);
           case 'listPattern': return visitListPattern(node1, node2, savedValue, array);
           case 'emptyListPattern': return visitEmptyListPattern(node1, node2, savedValue, array);
           case 'typeSignature': return visitTypeSignature(node1, node2, savedValue, array);
@@ -55,6 +57,7 @@ function checkDollarValues(userValue, rightValue, array, savedValue) {
     savedValue.push({ dollarValue: rightValue.name, correspondent: userValue.name });
   }
 }
+
 function visitTypeSignature(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     if (node1.types.length !== node2.types.length) {
@@ -70,6 +73,7 @@ function visitTypeSignature(node1, node2, savedValue, array) {
   }
   return array;
 }
+
 
 function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
   if (!node2.isUnderscore) {
@@ -152,6 +156,40 @@ function visitPattern(node1, node2, savedValue, array) {
     }
   }
   return array.concat(visit(node1.expression, node2.expression, savedValue, array));
+}
+
+function visitPatternGuards(node1, node2, savedValue, array) {
+  let errors = [...array];
+  if (!node2.isUnderscore) {
+    if (checkIfDollar(node2)) {
+      checkDollarValues(node1, node2, array, savedValue);
+    } else if (node1.name !== node2.name) {
+      errors.push({
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `The name of the function '${node1.name}' is not correct. Use '${node2.name}' instead.`,
+      });
+    }
+  }
+  if (node1.arguments.length !== node2.arguments.length) {
+    const { startPosition } = node1.arguments[0] || node1;
+    const { endPosition } = node1.arguments[node1.arguments.length - 1] || node1;
+
+    errors.push({
+      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+    });
+  } else {
+    for (let i = 0; i < node1.arguments.length; i += 1) {
+      errors = errors.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+    }
+  }
+  for (let i = 0; i < node1.guards.length; i += 1) {
+    errors = errors.concat(visit(node1.guards[i], node2.guards[i], savedValue, array));
+  }
+  return errors;
+}
+
+function visitPatternGuard(node1, node2, savedValue, array) {
+  const errors = array.concat(visit(node1.condition, node2.condition, savedValue, array));
+  return errors.concat(visit(node1.expression, node2.expression, savedValue, array));
 }
 
 function visitEmptyListPattern(node1, node2, savedValue, array) {
@@ -292,11 +330,11 @@ function commutativeCompare(node1, node2, savedValue) {
           lineNumber: node1.lineNumber,
           startPosition: node1.startPosition,
           endPosition: node1.endPosition,
-          message: `Incorrect argument list. Expected '${node2.text}'`,
+          message: `Incorrect argument list. Expected '${replaceDollars(node2.text, savedValue)}'`,
         },
       ];
     }
-    errors[0].message = `Incorrect argument. Did you mean '${arguments2[0].text}'?`;
+    errors[0].message = `Incorrect argument. Did you mean '${replaceDollars(arguments2[0].text, savedValue)}'?`;
 
     return errors;
   }
@@ -314,6 +352,14 @@ function commutativeCompare(node1, node2, savedValue) {
   }
 
   return [];
+}
+
+function replaceDollars(text, savedValue) {
+  let returnValue = `${text}`;
+  savedValue.forEach(({ dollarValue, correspondent }) => {
+    returnValue = returnValue.replace(dollarValue, correspondent);
+  });
+  return returnValue;
 }
 
 function visitBracketedexpression(node1, node2, savedValue, array) {

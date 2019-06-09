@@ -61,6 +61,26 @@ functionDefinitionPatternLine
     doesMatch: part.doesMatch,
     apply: part.apply,
   }}
+   / "\n" functionName:functionName patternArguments:patternWithWhitespace* whitespace? patternGuards:patternGuard* { return {
+    definitionLine: text(),
+    numberOfArguments: patternArguments.length,
+    isUnderscore: functionName.isUnderscore,
+    name: functionName.name,
+    kind: "patternGuards",
+    lineNumber: functionName.lineNumber,
+    startPosition: functionName.startPosition,
+    endPosition: patternArguments[patternArguments.length - 1].endPosition,
+    arguments: patternArguments,
+	guards: patternGuards,
+    doesMatch: function(args) {
+      for (var i=0; i<patternArguments.length; i++) {
+        if(patternArguments[i].doesMatch && !patternArguments[i].doesMatch(args[i])) return false;
+      }
+      return true;
+    },
+    apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); },
+    text: text()
+  }; } 
   / "\n"* "_" { return { kind: "pattern", isUnderscore: true } };
 
 functionDefinitionPatternPartOfLine
@@ -81,7 +101,18 @@ functionDefinitionPatternPartOfLine
     },
     apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); },
     text: text()
-  }; }
+  }; } 
+  
+patternGuard = [\n] whitespace* '|' whitespace* leftExp:expressionWithFunction whitespace* '=' whitespace* rightExp:expressionWithFunction { return {
+    kind: 'patternGuard',
+	condition: leftExp,
+    expression: rightExp,
+    text: text(),
+	lineNumber: location().start.line,
+    startPosition: location().start.column,
+    endPosition: location().end.column,
+}};
+               
 
 patternWithWhitespace
   = whitespace pattern:pattern { return pattern; }
@@ -145,13 +176,15 @@ comma_expression
   = whitespace? "," whitespace? exp:expression { return exp; }
 
 functionName
-  = dollar:"$"? letters:[A-Za-z]+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = dollar:"$"? letters:[A-Za-z']+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: (dollar || "") + letters.join(""), infix: false, text: text()}; }
   / "_" { return { id: randomId(), kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true, text: text() } }
 
 infixFunctionName
-  = "+" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = "++"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, name: '++', infix: true, text: text()}; }
+  / "+" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '+', infix: true, text: text()}; }
   / "-" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '-', infix: true, text: text()}; }
@@ -159,7 +192,14 @@ infixFunctionName
     endPosition: location().end.column, name: ':', infix: true, text: text()}; }
   / "||"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '||', infix: true, text: text()}; }
+  / "=="{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, name: '==', infix: true, text: text()}; }
+  / "<"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, name: '<', infix: true, text: text()}; }
+  / ">"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, name: '>', infix: true, text: text()}; }
   / "_" { return {id: randomId(), kind: "functionName", isUnderscore: true } }
+  
 
 integer
   = digits:[0-9]+ { return { id: randomId(),  text: text(), kind: "int", lineNumber: location().start.line, startPosition: location().start.column,

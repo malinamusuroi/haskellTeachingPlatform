@@ -26,9 +26,11 @@ class Exercise extends Component {
     };
   }
 
-  componentDidMount = () => {
-    fetch('../model.json')
-      .then(response => response.json()).then((myJson) => {
+  updateProblem = () => {
+    const { match: { params } } = this.props;
+    fetch(`../${params.exercise}.json`)
+      .then(response => response.json())
+      .then((myJson) => {
         this.setState({
           correctModel: myJson.model,
           badExpressions: myJson.wrongExpression,
@@ -37,8 +39,17 @@ class Exercise extends Component {
           tests: myJson.tests,
           examples: myJson.examples,
         });
-      });
+      })
+      .catch(console.error);
   }
+
+  componentDidMount = () => {
+    this.updateProblem();
+  }
+
+  componentDidUpdate = () => {
+    this.updateProblem();
+  };
 
   handleValue = (input) => {
     this.setState({ testValue: input.target.value });
