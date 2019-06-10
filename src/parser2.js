@@ -217,7 +217,9 @@ module.exports = /*
               }
               return true;
             },
-            apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); },
+            apply: function(functionArguments) {
+            	return ASTTransformations.fillInArgumentsGuard(patternGuards, patternArguments, functionArguments); 
+            },
             text: text()
           }; },
         peg$c25 = function() { return { kind: "pattern", isUnderscore: true } },

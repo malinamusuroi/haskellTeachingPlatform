@@ -202,6 +202,30 @@ window.ASTTransformations = {
   fillInArguments: function(AST, patternArguments, functionArguments) {
     var converted = _convertListPatternToSeparateArguments(patternArguments, functionArguments);
     return _fillInArgumentsInternal(AST, converted.patternArguments, converted.functionArguments);
+  },
+
+  fillInArgumentsGuard(guards, patternArguments, functionArguments) {
+    var converted = _convertListPatternToSeparateArguments(patternArguments, functionArguments);
+
+    for (const guard of guards) {
+      const { condition } = guard;
+      const { text: conditionText } = condition;
+
+      if (conditionText.indexOf("otherwise") !== -1) {
+        return _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments);
+      }
+
+      converted.patternArguments.forEach((argument, index) => {
+        const variable = argument.text;
+        const value = converted.functionArguments[index].text;
+        conditionText = conditionText.replace(variable, value);
+      });
+      const isConditionTrue = eval(conditionText);
+
+      if (isConditionTrue) {
+        return _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments);
+      }
+    }
   }
 };
 

@@ -78,7 +78,9 @@ functionDefinitionPatternLine
       }
       return true;
     },
-    apply: function(functionArguments) { return ASTTransformations.fillInArguments(exp, patternArguments, functionArguments); },
+    apply: function(functionArguments) {
+    	return ASTTransformations.fillInArgumentsGuard(patternGuards, patternArguments, functionArguments); 
+    },
     text: text()
   }; } 
   / "\n"* "_" { return { kind: "pattern", isUnderscore: true } };
@@ -176,7 +178,7 @@ comma_expression
   = whitespace? "," whitespace? exp:expression { return exp; }
 
 functionName
-  = dollar:"$"? letters:[A-Za-z']+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = dollar:"$"? letters:[A-Za-z'"]+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: (dollar || "") + letters.join(""), infix: false, text: text()}; }
   / "_" { return { id: randomId(), kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true, text: text() } }
