@@ -7,19 +7,15 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
     }
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
-        if (node1.kind === 'bracketedExpression') {
-          node1 = node1.expression;
-        } else if (node2.kind === 'bracketedExpression') {
-          node2 = node2.expression;
-        } else {
-          array.push({
-            name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
-          });
-        }
+        array.push({
+          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
+        });
       } else {
         switch (node1.kind) {
           case 'functionDefinition': return visitFunctionDefinition(node1, node2, savedValue, array, isPerfect);
           case 'pattern': return visitPattern(node1, node2, savedValue, array);
+          case 'patternGuards': return visitPatternGuards(node1, node2, savedValue, array);
+          case 'patternGuard': return visitPatternGuard(node1, node2, savedValue, array);
           case 'listPattern': return visitListPattern(node1, node2, savedValue, array);
           case 'emptyListPattern': return visitEmptyListPattern(node1, node2, savedValue, array);
           case 'typeSignature': return visitTypeSignature(node1, node2, savedValue, array);
@@ -29,6 +25,7 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
           case 'arrayType': return visitArrayType(node1, node2, savedValue, array);
           case 'type': return visitType(node1, node2, savedValue, array);
           case 'bool': return visitBool(node1, node2, savedValue, array);
+          case 'list': return visitList(node1, node2, savedValue, array);
           case 'expression': return visitExpression(node1, node2, savedValue, array);
           default: return null;
         }
@@ -61,6 +58,7 @@ function checkDollarValues(userValue, rightValue, array, savedValue) {
     savedValue.push({ dollarValue: rightValue.name, correspondent: userValue.name });
   }
 }
+
 function visitTypeSignature(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     if (node1.types.length !== node2.types.length) {
@@ -76,6 +74,7 @@ function visitTypeSignature(node1, node2, savedValue, array) {
   }
   return array;
 }
+
 
 function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
   if (!node2.isUnderscore) {
@@ -104,8 +103,6 @@ function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
       array.push({
         name: '', lineNumber: node1.lineNumber, startPosition: 'The function is incomplete', endPosition: node1.endPosition, message: `Expected ${node2.patterns.length} patterns in the implementation. Found ${node1.patterns.length}. `,
       });
-    } else {
-      return array;
     }
   }
   for (let i = 0; i < node1.patterns.length; i += 1) {
@@ -160,6 +157,40 @@ function visitPattern(node1, node2, savedValue, array) {
     }
   }
   return array.concat(visit(node1.expression, node2.expression, savedValue, array));
+}
+
+function visitPatternGuards(node1, node2, savedValue, array) {
+  let errors = [...array];
+  if (!node2.isUnderscore) {
+    if (checkIfDollar(node2)) {
+      checkDollarValues(node1, node2, array, savedValue);
+    } else if (node1.name !== node2.name) {
+      errors.push({
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `The name of the function '${node1.name}' is not correct. Use '${node2.name}' instead.`,
+      });
+    }
+  }
+  if (node1.arguments.length !== node2.arguments.length) {
+    const { startPosition } = node1.arguments[0] || node1;
+    const { endPosition } = node1.arguments[node1.arguments.length - 1] || node1;
+
+    errors.push({
+      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+    });
+  } else {
+    for (let i = 0; i < node1.arguments.length; i += 1) {
+      errors = errors.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+    }
+  }
+  for (let i = 0; i < node1.guards.length; i += 1) {
+    errors = errors.concat(visit(node1.guards[i], node2.guards[i], savedValue, array));
+  }
+  return errors;
+}
+
+function visitPatternGuard(node1, node2, savedValue, array) {
+  const errors = array.concat(visit(node1.condition, node2.condition, savedValue, array));
+  return errors.concat(visit(node1.expression, node2.expression, savedValue, array));
 }
 
 function visitEmptyListPattern(node1, node2, savedValue, array) {
@@ -237,6 +268,26 @@ function visitBool(node1, node2, savedValue, array) {
   return array;
 }
 
+function visitList(node1, node2, savedValue, array) {
+  let errors = [...array];
+
+  if (node1.items.length !== node2.items.length) {
+    array.push({
+      name: '',
+      lineNumber: node1.lineNumber,
+      startPosition: node1.startPosition,
+      endPosition: node1.endPosition,
+      message: `Unexpected number of items in list. Expected ${node2.items.length} items, but found ${node1.items.length}.`,
+    });
+  } else {
+    for (let i = 0; i < node1.items.length; i += 1) {
+      errors = errors.concat(visit(node1.items[i], node2.items[i], savedValue, array));
+    }
+  }
+
+  return errors;
+}
+
 // eslint-disable-next-line consistent-return
 function visitExpression(node1, node2, savedValue, array) {
   if (node2.isUnderscore) return array;
@@ -249,13 +300,87 @@ function visitFunctionApplication(node1, node2, savedValue, array) {
         name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
       });
     } else {
-      for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
-        array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+      if (node1.functionName.name === '||') {
+        const errors = commutativeCompare(node1, node2, savedValue, []);
+        if (errors.length !== 0) {
+          errors.forEach(error => array.push(error));
+        }
+      } else {
+        for (let i = 0; i < node1.arguments.length && i < node2.arguments.length; i += 1) {
+          array.concat(visit(node1.arguments[i], node2.arguments[i], savedValue, array));
+        }
       }
     }
     return array.concat(visit(node1.functionName, node2.functionName, savedValue, array));
   }
   return array;
+}
+
+function commutativeCompare(node1, node2, savedValue) {
+  const arguments1 = [...node1.arguments];
+  const arguments2 = [...node2.arguments];
+
+  let errors = [];
+
+  while (arguments1.length !== 0 && arguments2.length !== 0) {
+    const firstArgument = arguments1[0];
+    const matchingIndex = arguments2.findIndex(arg => (
+      visit(firstArgument, arg, savedValue, []).length === 0
+    ));
+    if (matchingIndex !== -1) {
+      arguments2.splice(matchingIndex, 1); // Remove the matching argument.
+    } else {
+      errors = errors.concat([
+        {
+          name: firstArgument.name,
+          lineNumber: firstArgument.lineNumber,
+          startPosition: firstArgument.startPosition,
+          endPosition: firstArgument.endPosition,
+          message: 'Incorrect argument.',
+        },
+      ]);
+    }
+    arguments1.splice(0, 1); // Remove the first argument.
+  }
+
+  if (errors.length > 0) {
+    if (errors.length > 1) {
+      return [
+        {
+          name: node1.name,
+          lineNumber: node1.lineNumber,
+          startPosition: node1.startPosition,
+          endPosition: node1.endPosition,
+          message: `Incorrect argument list. Expected '${replaceDollars(node2.text, savedValue)}'`,
+        },
+      ];
+    }
+    errors[0].message = `Incorrect argument. Did you mean '${replaceDollars(arguments2[0].text, savedValue)}'?`;
+
+    return errors;
+  }
+
+  if (arguments1.length !== arguments2.length) {
+    return [
+      {
+        name: node1.name,
+        lineNumber: node1.lineNumber,
+        startPosition: node1.startPosition,
+        endPosition: node1.endPosition,
+        message: 'Incorrect argument list.',
+      },
+    ];
+  }
+
+  return [];
+}
+
+function replaceDollars(text, savedValue) {
+  let returnValue = `${text}`;
+  savedValue.forEach(({ dollarValue, correspondent }) => {
+    returnValue = returnValue.replace(dollarValue, correspondent);
+  });
+  return returnValue;
 }
 
 function visitBracketedexpression(node1, node2, savedValue, array) {

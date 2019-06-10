@@ -7,6 +7,13 @@ import './NavigationBar.css';
 
 const { SubMenu } = Menu;
 
+const PROBLEMS = [
+  'twoSame',
+  'pos',
+  'precedes',
+  'rev',
+];
+
 export default class NavBar extends Component {
   state = {
     current: 'mail',
@@ -19,6 +26,15 @@ export default class NavBar extends Component {
       current: e.key,
     });
   };
+
+  renderProblemLinks = () => {
+    return PROBLEMS.map((problemName, index) => (
+      <Menu.Item key={`setting:${problemName}`}>
+        <Link to={`/exercise/${problemName}`} />
+        {`Problem ${index + 1}: ${problemName}`}
+      </Menu.Item>
+    ));
+  }
 
   render() {
     const { current } = this.state;
@@ -39,14 +55,7 @@ export default class NavBar extends Component {
             </span>
           }
         >
-          <Menu.Item key="setting:1">
-            <Link to="/exercise" />
-            Problem 1
-          </Menu.Item>
-          <Menu.Item key="setting:2">
-            <Link to="/exercise" />
-            Problem 2
-          </Menu.Item>
+          { this.renderProblemLinks() }
         </SubMenu>
       </Menu>
     );

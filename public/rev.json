@@ -1,0 +1,35 @@
+{
+    "problem": "Write a function which reverses a list.",
+    "model": "rev :: [a] -> [a]\nrev [] = []\nrev (c : cs) = (rev cs) ++ [c]",
+    "examples": "Input: [3, 4, 2]. Output: [2, 4, 3].\nInput: [4, 3, 4]. Output: [4, 3, 4].",
+    "wrongExpression": [
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "tail _",
+            "message": "Don't use tail. Instead, use pattern matching."
+        }
+    ],
+    "wrongPatterns": [
+    ],
+    "tests": [
+        {
+         "value": "rev [4, 5, 6]",
+         "match": "[6,5,4]",
+         "result": ""
+        },
+        {
+            "value": "rev [3, 4, 3]",
+            "match": "[3,4,3]",
+            "result": ""
+        },
+        {
+            "value": "rev [3, 4, 5]",
+            "match": "[5,4,3]",
+            "result": ""
+        }
+    ]
+}
+

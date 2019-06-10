@@ -3,6 +3,7 @@
 import React, { Component } from 'react';
 import './Lesson.css';
 import { Row, Col } from 'antd';
+import { parse } from './parser2';
 import NavBar from './NavigationBar';
 
 import HaskellJSProgram from './hsjs/ProgramComponent';
@@ -15,6 +16,7 @@ class Lesson extends Component {
       data: '',
       testValue: '',
     };
+    this.updateFunctionList('sum :: [Int] -> Int\nsum [] = 0\nsum (x:xs) = x + sum xs');
   }
 
   handleValue = (input) => {
@@ -32,6 +34,17 @@ class Lesson extends Component {
     }).then(res => res.json()).then(result => this.setState({ data: result.body }))
       .catch(error => console.log(error));
   }
+
+  updateFunctionList = (code) => {
+    var newFunctions = parse(code)
+      //+ "\n\n", { startRule: 'functionDefinitionList' });
+    newFunctions.forEach(function (func) {
+      if ([':', '+', '-'].indexOf(func.name) < 0) {
+        window.functions[func.name] = func;
+      }
+    });
+  }
+
 
   render() {
     const {
@@ -56,7 +69,7 @@ class Lesson extends Component {
           <p> Let's take the same function and try to express it using pattern matching: </p>
           <Row>
             <Col xs={24} md={12} className="code-editor">
-              <div className="code-example">
+              <div id="code" className="code-example">
                 sum :: [Int] -> Int
                 <br />
                 sum [] = 0
@@ -76,25 +89,17 @@ class Lesson extends Component {
             <Col xs={24} md={12}>
               <b> How does it work?  </b>
               <br />
-              sum [10, 20, 30]
-              <br />
-              -> 10 + sum [20, 30]
-              <br />
-              -> 10 + (20 + sum [30])
-              <br />
-              -> 10 + (20 + (30 + sum [])) -> 10 + (20 + (30 + 0))
-              <br />
-              -> 60
-              <br />
-              <HaskellJSProgram
-                defaultValue="addOne 4"
-              />
+              <div>
+                <HaskellJSProgram
+                  defaultValue="sum [10, 20, 30]"
+                />
+              </div>
             </Col>
           </Row>
+          <div style={{ marginTop: '20px' }}>
           <p>
             <strong> Here are some predefined functions over lists: </strong>
           </p>
-          <div style={{ marginTop: '20px' }}>
             <strong> !! </strong>
             :: [a] -&gt; Int -&gt; a ---- The !! operator (sometimes pronounced “at”)
             performs list indexing (the head is index 0):

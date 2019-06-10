@@ -27,7 +27,7 @@ var FunctionEditor = createReactClass({displayName: 'FunctionEditor',
         errorDiv = React.DOM.div({
           className: 'function-editor-error-message',
           style: {top: 15*(this.state.error.line-1) - textAreaScrollTop},
-          key: 3
+          key: this.state.error.line,
         }, this.state.error.message);
       }
 
@@ -76,6 +76,7 @@ var FunctionEditor = createReactClass({displayName: 'FunctionEditor',
       '-': window.functions['-'],
       'elem': window.functions['elem'],
       '||': window.functions['||'],
+      'sum': window.functions['sum'],
     };
 
     var newFunctions = parse(text + "\n\n", {startRule: 'functionDefinitionList'});

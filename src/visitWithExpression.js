@@ -12,6 +12,7 @@ export default function visitWithExpression(node1, node2, array) {
       case 'functionName': return visitFunctionName(node1, node2, array);
       case 'bracketedExpression': return visitBracketedexpression(node1, node2, array);
       case 'expression': return visitExpression(node1, node2, array);
+      case 'patternGuards': return visitPatternGuards(node1, node2, array);
       default: return null;
     }
   }
@@ -79,6 +80,22 @@ function visitPattern(node1, node2, array) {
     visitWithExpression(node1.arguments[i], node2, array);
   }
   visitWithExpression(node1.expression, node2, array);
+  return array;
+}
+
+function visitPatternGuards(node1, node2, array) {
+  if (node1.kind === node2.kind) {
+    array.push(displayErrorIfSame(node1, node2));
+  }
+  for (let i = 0; i < node1.arguments.length; i += 1) {
+    visitWithExpression(node1.arguments[i], node2, array);
+  }
+
+  node1.guards.forEach((guard) => {
+    visitWithExpression(guard.condition, node2, array);
+    visitWithExpression(guard.expression, node2, array);
+  });
+
   return array;
 }
 

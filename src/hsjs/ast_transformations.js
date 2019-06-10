@@ -10,11 +10,11 @@ require('./functions/elem');
 require('./functions/or');
 
 var _isValidApplication = function(functionName, _arguments) {  // TODO REMOVE THIS METHOD
-  // if (window.functions[functionName] != undefined){
-  //   return window.functions[functionName].isValidApplication(_arguments);
-  // } else {
-  //   return false;
-  // }
+  if (window.functions[functionName] != undefined){
+    return window.functions[functionName].isValidApplication(_arguments);
+  } else {
+    return false;
+  }
   return true;
 };
 
@@ -34,7 +34,7 @@ var _verifyApplication = function(node) {
     throw 'node needs to be an application';
   }
 
-  console.log("isVALidAPPPPPPPppp", node2.functionName.name, node2.arguments)
+  console.log("isVALidAPPPPPPPppp", node2.kind, node2.functionName.name, node2.arguments)
   if (!_isValidApplication(node2.functionName.name, node2.arguments)) {
     throw 'invalid application';
   }
@@ -49,7 +49,13 @@ var _applyFunction = function(node) {
 
   var func = window.functions[node.functionName.name];
   var index = _matchingPatternIndex(func, node.arguments);
-  return func.patterns[index].apply(node.arguments);
+
+  const applyResult = func.patterns[index].apply(node.arguments);
+
+  return {
+    ...applyResult,
+    pattern: func.patterns[index].lineNumber,
+  };
 }
 
 var _giveDifferentIds = function(AST) {
@@ -153,16 +159,17 @@ window.ASTTransformations = {
     var node = ASTTransformations.subtreeById(AST, id);
     if (!node) return '';
     _verifyApplication(node);
+    return ' '
 
-    var func = window.functions[node.functionName.name];
-    var index = _matchingPatternIndex(func, node.arguments);
-    var functionName = '<em>' + (func.infix ? '(' : '') + func.name + (func.infix ? ')' : '') + '</em>';
+    // var func = window.functions[node.functionName.name];
+    // var index = _matchingPatternIndex(func, node.arguments);
+    // var functionName = '<em>' + (func.infix ? '(' : '') + func.name + (func.infix ? ')' : '') + '</em>';
 
-    var html = functionName + ' :: ' + func.typeSignature;
-    if (func.patterns[index].definitionLine) {
-      html += '<br>' + functionName + ' ' + func.patterns[index].definitionLine
-    }
-    return html;
+    // //var html = functionName + ' :: ' + func.typeSignature;
+    // if (func.patterns[index].definitionLine) {
+    //  // html += '<br>' + functionName + ' ' + func.patterns[index].definitionLine
+    // }
+    // return html;
   },
 
   replaceSubtree: function(oldAST, id, newSubtree) {
@@ -182,10 +189,18 @@ window.ASTTransformations = {
 
   applyFunction: function(oldAST, id) {
     var subtree = ASTTransformations.subtreeById(oldAST, id);
-    var newSubtree = _applyFunction(_giveDifferentIds(_.cloneDeep(subtree)));
+    let applyResult = _applyFunction(_giveDifferentIds(_.cloneDeep(subtree)));
+
+    if (!applyResult.hasOwnProperty('ast')) {
+      applyResult = {
+        ast: applyResult,
+      }
+    }
+
+    var {ast: newSubtree} = applyResult;
     var newAST = ASTTransformations.replaceSubtree(oldAST, id, newSubtree);
 
-    return {ast: newAST, justComputedId: newSubtree.id};
+    return {...applyResult, ast: newAST, justComputedId: newSubtree.id};
   },
 
   astToString: function(node) {
@@ -200,7 +215,39 @@ window.ASTTransformations = {
 
   fillInArguments: function(AST, patternArguments, functionArguments) {
     var converted = _convertListPatternToSeparateArguments(patternArguments, functionArguments);
-    return _fillInArgumentsInternal(AST, converted.patternArguments, converted.functionArguments);
+    return { 
+      ast: _fillInArgumentsInternal(AST, converted.patternArguments, converted.functionArguments),
+    };
+  },
+
+  fillInArgumentsGuard(guards, patternArguments, functionArguments) {
+    var converted = _convertListPatternToSeparateArguments(patternArguments, functionArguments);
+
+    for (const guard of guards) {
+      const { condition } = guard;
+      const { text: conditionText } = condition;
+
+      if (conditionText.indexOf("otherwise") !== -1) {
+        return {
+          ast: _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments),
+          condition: conditionText,
+        };
+      }
+
+      converted.patternArguments.forEach((argument, index) => {
+        const variable = argument.text;
+        const value = converted.functionArguments[index].text;
+        conditionText = conditionText.replace(variable, value);
+      });
+      const isConditionTrue = eval(conditionText);
+
+      if (isConditionTrue) {
+        return {
+          ast: _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments),
+          condition: conditionText,
+        };
+      }
+    }
   }
 };
 
