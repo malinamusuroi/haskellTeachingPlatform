@@ -25,6 +25,7 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
           case 'arrayType': return visitArrayType(node1, node2, savedValue, array);
           case 'type': return visitType(node1, node2, savedValue, array);
           case 'bool': return visitBool(node1, node2, savedValue, array);
+          case 'list': return visitList(node1, node2, savedValue, array);
           case 'expression': return visitExpression(node1, node2, savedValue, array);
           default: return null;
         }
@@ -265,6 +266,26 @@ function visitBool(node1, node2, savedValue, array) {
     });
   }
   return array;
+}
+
+function visitList(node1, node2, savedValue, array) {
+  let errors = [...array];
+
+  if (node1.items.length !== node2.items.length) {
+    array.push({
+      name: '',
+      lineNumber: node1.lineNumber,
+      startPosition: node1.startPosition,
+      endPosition: node1.endPosition,
+      message: `Unexpected number of items in list. Expected ${node2.items.length} items, but found ${node1.items.length}.`,
+    });
+  } else {
+    for (let i = 0; i < node1.items.length; i += 1) {
+      errors = errors.concat(visit(node1.items[i], node2.items[i], savedValue, array));
+    }
+  }
+
+  return errors;
 }
 
 // eslint-disable-next-line consistent-return

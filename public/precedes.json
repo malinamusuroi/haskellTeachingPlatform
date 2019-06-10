@@ -1,0 +1,432 @@
+{
+    "problem": "Write a function which returns whether a string is lexicographically smaller than another string.",
+    "model": "$precedes :: String -> String -> Bool\n$precedes [] s' = True\n$precedes (c : cs) (c' : cs')\n| c < c' = True\n| c == c' = $precedes cs cs'\n$precedes s s' = False",
+    "examples": "Input: mother father. Output: False.\nInput: man woman. Output: True.",
+    "wrongExpression": [
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "_ == True",
+            "message": "Don't fuck up."
+        },
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        }
+    ],
+    "wrongPatterns": [
+        {
+            "pattern": "_\ntwoSame [] = True_",
+            "message": "For a list with no elements, there will not be 2 elements the same!",
+            "lineNumber": 2
+        }
+    ],
+    "tests": [
+        {
+         "value": "$precedes \"mother\" \"father\"",
+         "match": "False",
+         "result": ""
+        },
+        {
+            "value": "$precedes \"father\" \"mother\"",
+            "match": "True",
+            "result": ""
+        },
+        {
+            "value": "$precedes \"march\" \"mall\"",
+            "match": "False",
+            "result": ""
+        }
+    ]
+}
+

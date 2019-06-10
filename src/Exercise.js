@@ -28,7 +28,12 @@ class Exercise extends Component {
 
   updateProblem = () => {
     const { match: { params } } = this.props;
-    fetch(`../${params.exercise}.json`)
+    if (params.exercise === this.state.exercise) {
+      return;
+    }
+    const { exercise } = params;
+    this.setState({ exercise });
+    fetch(`../${exercise}.json`)
       .then(response => response.json())
       .then((myJson) => {
         this.setState({
@@ -165,13 +170,23 @@ class Exercise extends Component {
         savedValue = null;
       }
 
-      return savedValue && savedValue.correspondent ? ({
+      if (savedValue && savedValue.correspondent) {
+        return {
+          ...elem,
+          value: `${savedValue.correspondent} ${second}`,
+        };
+      }
+
+      if (firstWord.length === 0 || firstWord[0] === '$') {
+        return {
+          ...elem,
+          value: `test ${second}`,
+        };
+      }
+      return {
         ...elem,
-        value: `${savedValue.correspondent} ${second}`,
-      }) : ({
-        ...elem,
-        value: ` test ${second}`,
-      });
+        value: `${firstWord} ${second}`,
+      };
     });
     const inputValue = code;
     testsToRun.forEach((elem, index) => fetch('/compile', {

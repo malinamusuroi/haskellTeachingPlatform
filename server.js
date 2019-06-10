@@ -27,6 +27,10 @@ app.listen(port, (error) => {
   }
 });
 
+const escapeShell = (cmd) => {
+  return cmd.replace(/(["\s'$`\\])/g,'\\$1');
+};
+
 app.post('/compile', (req, res) => {
   const haskellCode = req.body;
   let { val: fileContent } = haskellCode;
@@ -39,7 +43,8 @@ app.post('/compile', (req, res) => {
     }
     console.log('The file was saved!');
   });
-  const call = `cd /tmp && echo ${functionCall} | ghci -ddump-json haskellFile.hs`;
+  console.log(escapeShell(functionCall));
+  const call = `cd /tmp && echo ${escapeShell(functionCall)} | ghci -ddump-json haskellFile.hs`;
   exec(call, (error, stdout, stderr) => {
     console.log('stdout: ', stdout);
     console.log('stderr: ', stderr);

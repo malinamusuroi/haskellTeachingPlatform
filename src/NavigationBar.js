@@ -10,6 +10,8 @@ const { SubMenu } = Menu;
 const PROBLEMS = [
   'twoSame',
   'pos',
+  'precedes',
+  'rev',
 ];
 
 export default class NavBar extends Component {
