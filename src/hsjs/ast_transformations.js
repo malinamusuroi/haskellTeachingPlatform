@@ -10,11 +10,11 @@ require('./functions/elem');
 require('./functions/or');
 
 var _isValidApplication = function(functionName, _arguments) {  // TODO REMOVE THIS METHOD
-  // if (window.functions[functionName] != undefined){
-  //   return window.functions[functionName].isValidApplication(_arguments);
-  // } else {
-  //   return false;
-  // }
+  if (window.functions[functionName] != undefined){
+    return window.functions[functionName].isValidApplication(_arguments);
+  } else {
+    return false;
+  }
   return true;
 };
 
@@ -49,7 +49,13 @@ var _applyFunction = function(node) {
 
   var func = window.functions[node.functionName.name];
   var index = _matchingPatternIndex(func, node.arguments);
-  return func.patterns[index].apply(node.arguments);
+
+  const applyResult = func.patterns[index].apply(node.arguments);
+
+  return {
+    ...applyResult,
+    pattern: func.patterns[index].lineNumber,
+  };
 }
 
 var _giveDifferentIds = function(AST) {
@@ -183,10 +189,18 @@ window.ASTTransformations = {
 
   applyFunction: function(oldAST, id) {
     var subtree = ASTTransformations.subtreeById(oldAST, id);
-    var newSubtree = _applyFunction(_giveDifferentIds(_.cloneDeep(subtree)));
+    let applyResult = _applyFunction(_giveDifferentIds(_.cloneDeep(subtree)));
+
+    if (!applyResult.hasOwnProperty('ast')) {
+      applyResult = {
+        ast: applyResult,
+      }
+    }
+
+    var {ast: newSubtree} = applyResult;
     var newAST = ASTTransformations.replaceSubtree(oldAST, id, newSubtree);
 
-    return {ast: newAST, justComputedId: newSubtree.id};
+    return {...applyResult, ast: newAST, justComputedId: newSubtree.id};
   },
 
   astToString: function(node) {
@@ -201,7 +215,9 @@ window.ASTTransformations = {
 
   fillInArguments: function(AST, patternArguments, functionArguments) {
     var converted = _convertListPatternToSeparateArguments(patternArguments, functionArguments);
-    return _fillInArgumentsInternal(AST, converted.patternArguments, converted.functionArguments);
+    return { 
+      ast: _fillInArgumentsInternal(AST, converted.patternArguments, converted.functionArguments),
+    };
   },
 
   fillInArgumentsGuard(guards, patternArguments, functionArguments) {
@@ -212,7 +228,10 @@ window.ASTTransformations = {
       const { text: conditionText } = condition;
 
       if (conditionText.indexOf("otherwise") !== -1) {
-        return _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments);
+        return {
+          ast: _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments),
+          condition: conditionText,
+        };
       }
 
       converted.patternArguments.forEach((argument, index) => {
@@ -223,7 +242,10 @@ window.ASTTransformations = {
       const isConditionTrue = eval(conditionText);
 
       if (isConditionTrue) {
-        return _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments);
+        return {
+          ast: _fillInArgumentsInternal(guard.expression, converted.patternArguments, converted.functionArguments),
+          condition: conditionText,
+        };
       }
     }
   }

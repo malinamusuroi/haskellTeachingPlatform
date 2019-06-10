@@ -27,7 +27,7 @@ var FunctionEditor = createReactClass({displayName: 'FunctionEditor',
         errorDiv = React.DOM.div({
           className: 'function-editor-error-message',
           style: {top: 15*(this.state.error.line-1) - textAreaScrollTop},
-          key: 3
+          key: this.state.error.line,
         }, this.state.error.message);
       }
 

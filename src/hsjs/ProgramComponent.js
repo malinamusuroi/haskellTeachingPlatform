@@ -33,6 +33,8 @@ var HaskellJSProgram = createReactClass({displayName: 'functionName',
 
     lines.push({
       ast: applyInfo.ast,
+      pattern: applyInfo.pattern,
+      condition: applyInfo.condition,
       clickedComputationId: null,
       justComputedId: applyInfo.justComputedId
     });

@@ -11,6 +11,8 @@ var Lines = React.createFactory(createReactClass({displayName: 'Lines',
           this.props.lines.map((function(line, index) {
             return Line({lineState: {
               ast: line.ast,
+              pattern: line.pattern,
+              condition: line.condition,
               index: index,
               lastIndex: this.props.lines.length-1,
               clickedComputationId: line.clickedComputationId,

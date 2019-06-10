@@ -16,6 +16,7 @@ class Lesson extends Component {
       data: '',
       testValue: '',
     };
+    this.updateFunctionList('sum :: [Int] -> Int\nsum [] = 0\nsum (x:xs) = x + sum xs');
   }
 
   handleValue = (input) => {
@@ -23,7 +24,6 @@ class Lesson extends Component {
   }
 
   onSubmit = () => {
-    this.updateFunctionList('sum :: [Int] -> Int\nsum [] = 0\nsum (x:xs) = x + sum xs');
     const { value: inputValue, testValue: testInput } = this.state;
     fetch('/compile', {
       method: 'POST',

@@ -62,7 +62,7 @@ var Line = React.createFactory(createReactClass({displayName: 'Line',
     var lineContext, lineEditButton, lineClearButton;
     if (this.props.lineState.highlightedLineIndex == this.props.lineState.index) {
       className += " line-highlight";
-      lineContext = LineContext({lineState: this.props.lineState, key: 2});
+      lineContext = LineContext({lineState: this.props.lineState, key: this.props.lineState.index});
     }
     if (this.props.lineState.index === 0 && !this.props.lineState.editing) {
       // lineEditButton = DOM.span({
@@ -101,6 +101,12 @@ var Line = React.createFactory(createReactClass({displayName: 'Line',
         errorDiv
       ]);
     } else {
+      let patternSpan = this.props.lineState.pattern ? (
+        DOM.span({key: this.props.lineState.pattern, className: "lineExtra"}, ` matched pattern at line ${this.props.lineState.pattern}`)
+      ) : null;
+      let conditionSpan = this.props.lineState.condition ? (
+        DOM.span({key: this.props.lineState.condition, className: "lineExtra"}, `, condition ${this.props.lineState.condition} is true`)
+      ) : null;
       return DOM.div({
         className: className,
         onTouchStart: this.highlight,
@@ -109,10 +115,10 @@ var Line = React.createFactory(createReactClass({displayName: 'Line',
       },
         DOM.div({className: 'line-inner'},
           [
-            Node({lineState: this.props.lineState, id: this.props.lineState.ast.id, key: 1}),
+            Node({lineState: this.props.lineState, id: this.props.lineState.ast.id, key: this.props.lineState.ast.id}),
             lineContext,
-            lineEditButton,
-            lineClearButton
+            patternSpan,
+            conditionSpan,
           ]
         )
       );
