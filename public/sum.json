@@ -1,0 +1,35 @@
+{
+    "problem": "Write a function computes the sum of all the elements in a list.",
+    "model": "$sum :: [Int] -> Int\n$sum [] = 0\n$sum ($x : $xs) = $x + $sum $xs",
+    "examples": "Input: [3, 4, 2]. Output: [2, 4, 3].\nInput: [4, 3, 4]. Output: [4, 3, 4].",
+    "wrongExpression": [
+        {
+            "pattern": "head _",
+            "message": "Don't use head. Instead, use pattern matching."
+        },
+        {
+            "pattern": "tail _",
+            "message": "Don't use tail. Instead, use pattern matching."
+        }
+    ],
+    "wrongPatterns": [
+    ],
+    "tests": [
+        {
+         "value": "$sum [4, 5, 6]",
+         "match": "15",
+         "result": ""
+        },
+        {
+            "value": "$sum [3, 4, 3]",
+            "match": "10",
+            "result": ""
+        },
+        {
+            "value": "$sum [3, 4, 5]",
+            "match": "12",
+            "result": ""
+        }
+    ]
+}
+

@@ -1,6 +1,6 @@
 {
     "problem": "Write a function that returns the position of an element in a list.",
-    "model": "pos :: Char -> String -> Int\npos c (c' : cs)\n| c==c' =0\n| otherwise = 1 + pos c cs",
+    "model": "pos :: Int -> [Int] -> Int\npos c (c' : cs)\n| c==c' =0\n| otherwise = 1 + pos c cs",
     "examples": "Input: [3, 4, 2]. Output: False. There are no 2 elements the same.\nInput: [4, 3, 4]. Output: True. The first and the last elements are the same.",
     "wrongExpression": [
         {
@@ -25,23 +25,23 @@
     ],
     "tests": [
         {
-         "value": "$a []",
-         "match": "False",
+         "value": "pos 3 [3, 4, 5]",
+         "match": "0",
          "result": ""
         },
         {
-            "value": "$a [3, 4, 3]",
-            "match": "True",
+            "value": "pos 5 [3, 4, 3, 5]",
+            "match": "3",
             "result": ""
         },
         {
-            "value": "$a [3, 4, 5]",
-            "match": "False",
+            "value": "pos 4 [3, 4, 5]",
+            "match": "1",
             "result": ""
         },
         {
-            "value": "$a [3, 4, 5, 6, 7, 3, 7, 9]",
-            "match": "True",
+            "value": "pos 5 [3, 6, 5, 9, 6, 10]",
+            "match": "2",
             "result": ""
         }
     ]

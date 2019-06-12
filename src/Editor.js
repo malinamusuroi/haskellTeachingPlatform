@@ -78,7 +78,7 @@ export default class Editor extends Component {
 
     return (
       <MonacoEditor
-        height="400"
+        height="280"
         language="haskell"
         theme="vs-dark"
         value={value}

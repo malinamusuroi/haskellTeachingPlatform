@@ -8,7 +8,7 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
         array.push({
-          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected kind '${node1.kind}'. Expected '${node2.kind}'.`,
+          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You wrote '${node1.text}', but we're expecting ${description(node2.kind)}`,
         });
       } else {
         switch (node1.kind) {
@@ -33,6 +33,27 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
     }
   }
   return array;
+}
+
+function description(kind) {
+  switch (kind) {
+    case 'functionDefinition': return "a function definition";
+    case 'pattern': return "a function pattern";
+    case 'patternGuards': return "function pattern guards";
+    case 'patternGuard': return "a function pattern guard";
+    case 'listPattern': return "pattern matching over a list, such as '(x: xs)'";
+    case 'emptyListPattern': return "pattern matching over an empty list, such as '[]'";
+    case 'typeSignature': return "a type signature, such as 'f :: [Int] -> Int'";
+    case 'functionApplication': return "a function call, such as 'f 1 2'";
+    case 'functionName': return "a function name or a variable name, such as 'f' or 'x'";
+    case 'bracketedExpression': return "a bracketed expression, such as '(1 + 2)'";
+    case 'arrayType': return "a list type, such as '[Int]'";
+    case 'type': return "a type, such as 'Int'";
+    case 'bool': return "a boolean literal, such as True or False";
+    case 'list': return "a list literal, such as [1,2,3]";
+    case 'expression': return "an expression, such as '1 + 2'";
+    default: return null;
+  }
 }
 
 function checkIfDollar(value2) {
@@ -79,20 +100,20 @@ function visitTypeSignature(node1, node2, savedValue, array) {
 function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
   if (!node2.isUnderscore) {
     if (checkIfDollar(node2)) {
-      if (node1.name.length <= 4) {
+      if (node1.name.length < 3) {
         array.push({
-          name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.nameStartPosition, endPosition: node1.nameEndPosition, message: 'Choose a better function name.',
+          name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.nameStartPosition, endPosition: node1.nameEndPosition, message: 'Your function name is too short. Use a more descriptive name',
         });
       }
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.name !== node2.name && node2.name !== undefined) {
-      if (node1.name.length <= 4) {
+      if (node1.name.length < 3) {
         array.push({
-          name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.nameStartPosition, endPosition: node1.nameEndPosition, message: 'Choose a better function name.',
+          name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.nameStartPosition, endPosition: node1.nameEndPosition, message: 'Your function name is too short. Use a more descriptive name',
         });
       }
       array.push({
-        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.nameStartPosition, endPosition: node1.nameEndPosition, message: `Wrong function name '${node1.name}'. Use '${node2.name}' instead.`,
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.nameStartPosition, endPosition: node1.nameEndPosition, message: `You wrote '${node1.name}', but we're expecting another name`,
       });
     }
   }
@@ -101,7 +122,7 @@ function visitFunctionDefinition(node1, node2, savedValue, array, isPerfect) {
   if (isPerfect) {
     if (node1.patterns.length < node2.patterns.length) {
       array.push({
-        name: '', lineNumber: node1.lineNumber, startPosition: 'The function is incomplete', endPosition: node1.endPosition, message: `Expected ${node2.patterns.length} patterns in the implementation. Found ${node1.patterns.length}. `,
+        name: '', lineNumber: node1.lineNumber, startPosition: 'The function is incomplete', endPosition: node1.endPosition, message: `Expected ${node2.patterns.length} patterns in the implementation. Found ${node1.patterns.length}`,
       });
     }
   }
@@ -115,7 +136,7 @@ function visitType(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     if (node1.name !== node2.name) {
       array.push({
-        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'The type signature you provided is not correct.',
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You defined the type signature to be ${node1.text}, but we're expecting another type signature`,
       });
     }
   }
@@ -128,7 +149,7 @@ function visitArrayType(node1, node2, savedValue, array) {
   }
   if (node1.name !== node2.name) {
     array.push({
-      name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'The type signature you provided is not correct.',
+      name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You defined the type signature to be ${node1.text}, but we're expecting another type signature`,
     });
   }
   return array;
@@ -140,7 +161,7 @@ function visitPattern(node1, node2, savedValue, array) {
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.name !== node2.name) {
       array.push({
-        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `The name of the function '${node1.name}' is not correct. Use '${node2.name}' instead.`,
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You defined the function '${node1.name}', but we're expecting another function name`,
       });
     }
   }
@@ -149,7 +170,7 @@ function visitPattern(node1, node2, savedValue, array) {
     const { endPosition } = node1.arguments[node1.arguments.length - 1] || node1;
 
     array.push({
-      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Your function has ${node1.arguments.length} arguments but we're expecting ${node2.arguments.length} arguments`,
     });
   } else {
     for (let i = 0; i < node1.arguments.length; i += 1) {
@@ -166,7 +187,7 @@ function visitPatternGuards(node1, node2, savedValue, array) {
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.name !== node2.name) {
       errors.push({
-        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `The name of the function '${node1.name}' is not correct. Use '${node2.name}' instead.`,
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You defined the function '${node1.name}', but we're expecting another function name`,
       });
     }
   }
@@ -175,7 +196,7 @@ function visitPatternGuards(node1, node2, savedValue, array) {
     const { endPosition } = node1.arguments[node1.arguments.length - 1] || node1;
 
     errors.push({
-      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+      name: '', lineNumber: node1.lineNumber, startPosition, endPosition, message: `Your function has ${node1.arguments.length} arguments but we're expecting ${node2.arguments.length} arguments`,
     });
   } else {
     for (let i = 0; i < node1.arguments.length; i += 1) {
@@ -199,7 +220,7 @@ function visitEmptyListPattern(node1, node2, savedValue, array) {
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.value !== node2.value) {
       array.push({
-        name: node1.value, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'Expected empty list pattern.',
+        name: node1.value, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You used ${node1.text}, but we're expecting an empty list pattern ([])`,
       });
       return array;
     }
@@ -213,13 +234,13 @@ function visitListPattern(node1, node2, savedValue, array) {
       checkDollarValues(node1.left, node2.left, array, savedValue);
     } else if (node1.left.name !== node2.left.name) {
       array.push({
-        name: node1.left.name, lineNumber: node1.left.lineNumber, startPosition: node1.left.startPosition, endPosition: node1.left.endPosition, message: `Unexpected left argument for list '${node1.left.name}'. Use '${node2.left.name}' instead.`,
+        name: node1.left.name, lineNumber: node1.left.lineNumber, startPosition: node1.left.startPosition, endPosition: node1.left.endPosition, message: `You used ${node1.left.text} as the left operand in the list pattern match, but we're expecting something else`,
       });
     }
   }
   if (node1.left.infix !== node2.left.infix) {
     array.push({
-      name: node1.left.infix, lineNumber: node1.left.lineNumber, startPosition: node1.left.startPosition, endPosition: node1.left.endPosition, message: `Expected '${node2.left.infix ? 'infix' : 'prefix'}'.`,
+      name: node1.left.infix, lineNumber: node1.left.lineNumber, startPosition: node1.left.startPosition, endPosition: node1.left.endPosition, message: `You've written a ${node1.left.infix ? 'infix' : 'prefix'} function call, but we're expecting it to be ${node2.left.infix ? 'infix' : 'prefix'}`,
     });
   }
 
@@ -228,12 +249,12 @@ function visitListPattern(node1, node2, savedValue, array) {
       checkDollarValues(node1.right, node2.right, array, savedValue);
     } else if (node1.right.name !== node2.right.name) {
       array.push({
-        name: node1.right.name, lineNumber: node1.right.lineNumber, startPosition: node1.right.startPosition, endPosition: node1.right.endPosition, message: `Unexpected right argument for list '${node1.right.name}'. Use '${node2.right.name}' instead.`,
+        name: node1.right.name, lineNumber: node1.right.lineNumber, startPosition: node1.right.startPosition, endPosition: node1.right.endPosition, message: `You used ${node1.right.text} as the right operand in the list pattern match, but we're expecting something else`,
       });
     }
     if (node1.right.infix !== node2.right.infix) {
       array.push({
-        name: node1.right.infix, lineNumber: node1.right.lineNumber, startPosition: node1.right.startPosition, endPosition: node1.right.endPosition, message: `Expected '${node2.right.infix ? 'infix' : 'prefix'}'.`,
+        name: node1.right.infix, lineNumber: node1.right.lineNumber, startPosition: node1.right.startPosition, endPosition: node1.right.endPosition, message: `You've written a ${node1.right.infix ? 'infix' : 'prefix'} function call, but we're expecting it to be ${node2.right.infix ? 'infix' : 'prefix'}`,
       });
     }
   }
@@ -246,12 +267,12 @@ function visitFunctionName(node1, node2, savedValue, array) {
       checkDollarValues(node1, node2, array, savedValue);
     } else if (node1.name !== node2.name) {
       array.push({
-        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Unexpected function name '${node1.name}'. Use '${node2.name}' instead.`,
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You used the function name '${node1.name}', but we're expecting something else`,
       });
     }
     if (node1.infix !== node2.infix) {
       array.push({
-        name: node1.infix, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected function '${node1.name}' to be applied '${node2.infix ? 'infix' : 'prefix'}'.`,
+        name: node1.infix, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You've written a ${node1.infix ? 'infix' : 'prefix'} function call, but we're expecting it to be ${node2.infix ? 'infix' : 'prefix'}`,
       });
     }
     return array;
@@ -262,7 +283,7 @@ function visitFunctionName(node1, node2, savedValue, array) {
 function visitBool(node1, node2, savedValue, array) {
   if (node1.value !== node2.value) {
     array.push({
-      name: " ", lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: 'The value of the bool is not correct',
+      name: " ", lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You used the boolean literal ${node1.text}, but we're expecting something else`,
     });
   }
   return array;
@@ -277,7 +298,7 @@ function visitList(node1, node2, savedValue, array) {
       lineNumber: node1.lineNumber,
       startPosition: node1.startPosition,
       endPosition: node1.endPosition,
-      message: `Unexpected number of items in list. Expected ${node2.items.length} items, but found ${node1.items.length}.`,
+      message: `You wrote a list with ${node1.items.length} items, but we're expecting a different number of items`,
     });
   } else {
     for (let i = 0; i < node1.items.length; i += 1) {
@@ -297,7 +318,7 @@ function visitFunctionApplication(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     if (node1.arguments.length !== node2.arguments.length) {
       array.push({
-        name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected ${node2.arguments.length} arguments for this function. Found ${node1.arguments.length}. `,
+        name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You passed ${node1.arguments.length} arguments to the '${node1.functionName.name}' function, but we expected a different number of arguments`,
       });
     } else {
       if (node1.functionName.name === '||') {
@@ -336,7 +357,7 @@ function commutativeCompare(node1, node2, savedValue) {
           lineNumber: firstArgument.lineNumber,
           startPosition: firstArgument.startPosition,
           endPosition: firstArgument.endPosition,
-          message: 'Incorrect argument.',
+          message: `You used ${firstArgument.text} as the first argument, but we expected something else`,
         },
       ]);
     }
@@ -351,11 +372,12 @@ function commutativeCompare(node1, node2, savedValue) {
           lineNumber: node1.lineNumber,
           startPosition: node1.startPosition,
           endPosition: node1.endPosition,
-          message: `Incorrect argument list. Expected '${replaceDollars(node2.text, savedValue)}'`,
+          message: `You wrote the arguments ${node1.text}, but we expected different arguments`,
         },
       ];
     }
-    errors[0].message = `Incorrect argument. Did you mean '${replaceDollars(arguments2[0].text, savedValue)}'?`;
+    // errors[0].message = `Incorrect argument. Did you mean '${replaceDollars(arguments2[0].text, savedValue)}'?`;
+    errors[0].message = `You wrote the arguments ${node1.text}, but we expected different arguments`;
 
     return errors;
   }
@@ -367,7 +389,7 @@ function commutativeCompare(node1, node2, savedValue) {
         lineNumber: node1.lineNumber,
         startPosition: node1.startPosition,
         endPosition: node1.endPosition,
-        message: 'Incorrect argument list.',
+        message: `You wrote the arguments ${node1.text}, but we're expecting a different number of arguments`,
       },
     ];
   }

@@ -6,6 +6,7 @@ import visitWithExpression from './visitWithExpression';
 import Editor from './Editor';
 import NavBar from './NavigationBar';
 import visit from './visitor';
+import { Row, Col, Input, Button, Divider, Icon } from 'antd';
 import HaskellJSProgram from './hsjs/ProgramComponent';
 
 class Exercise extends Component {
@@ -37,6 +38,17 @@ class Exercise extends Component {
       .then(response => response.json())
       .then((myJson) => {
         this.setState({
+          results: [],
+          tests: [],
+          value: '',
+          problem: '',
+          data: '',
+          testValue: '',
+          examples: '',
+          correctModel: '',
+          badPatterns: '',
+          savedValues: '',
+          val: '',
           correctModel: myJson.model,
           badExpressions: myJson.wrongExpression,
           badPatterns: myJson.wrongPatterns,
@@ -63,19 +75,25 @@ class Exercise extends Component {
   onSubmit = () => {
     this.updateFunctionList(this.state.value);
     const { value: inputValue, testValue } = this.state;
+    console.time('compile');
     fetch('/compile', {
       method: 'POST',
       body: JSON.stringify({ val: inputValue, v: testValue }),
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then(res => res.json()).then(result => {
+    }).then(res => {
+      console.timeEnd('compile');
+      return res.json()
+    }).then(result => {
       this.setState({ data: result.body })
-      this.setState({val: (<div>
-      <HaskellJSProgram
-        defaultValue={this.state.testValue}
-      />
-    </div>) })
+      this.setState({
+        val: (<div>
+          <HaskellJSProgram
+            defaultValue={this.state.testValue}
+          />
+        </div>)
+      })
     })
       // eslint-disable-next-line no-console
       .catch(console.error);
@@ -196,10 +214,14 @@ class Exercise extends Component {
         'Content-Type': 'application/json',
       },
     }).then(res => res.json()).then((result) => {
-      if (!result.isError) {
+      if (result.isRuntimeError) {
+        testsToRun[index].result = false;
+        testsToRun[index].stderr = result.body;
+      } else if (!result.isError) {
         testsToRun[index].result = result.body.includes(elem.match);
       } else {
         testsToRun[index].result = 'compiler error';
+        testsToRun[index].stderr = result.body;
       }
       this.setState({ results: testsToRun });
     }));
@@ -207,35 +229,44 @@ class Exercise extends Component {
 
   renderErrors = () => {
     const formatDiagnostic = ({ lineNumber, startPosition, message }) => `${lineNumber}:${startPosition}: ${message}\n`;
-    const { compilerErrors } = this.state;
+    const { compilerErrors, isShowingErrors } = this.state;
     if (compilerErrors !== undefined && compilerErrors.length !== 0) {
-      const { isShowingErrors } = this.state;
       return (
-        <div style={{ marginLeft: '9px'}}>
-          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Get hints</button>
+        <div>
           {isShowingErrors
             && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
           }
         </div>
       );
     }
-    return null;
+    return (
+      isShowingErrors ? (
+        <div>
+          <p>No hints to show.</p>
+        </div>
+      ) : null
+    );
   }
 
   renderTests = () => {
     const { results } = this.state;
+
+    if (results.length === 0) {
+      return <p>Write some code to execute tests.</p>;
+    }
+
     return results.map(elem => {
       let val;
       if (elem.result === true) {
-        val = '✅'
+        val = <Icon type="check" style={{ color: "green" }}/>
       } else if (elem.result === false) {
-        val = '❌'
+        val = <Icon type="close" style={{ color: "red" }}/>
       } else {
-        val = '⚠️ Compiler Error: The tests cannot be run'
+        val = <span><Icon type="warning" theme="filled" style={{ color: "rgb(236, 205, 18)" }}/> Compiler Error</span>
       }
       return <div key={elem.value} className="results">
         <pre>{elem.value}</pre>
-        {elem.result !== '' && elem.value !== undefined && <span>{val}</span>}
+        {elem.result !== '' && elem.value !== undefined && <span title={elem.stderr}>{val}</span>}
       </div>
     });
   }
@@ -252,40 +283,64 @@ class Exercise extends Component {
 
 
     return (
-      <div>
+      <div className="exercise">
         <NavBar> </NavBar>
-        <div style={{ width: '980px', margin: '50px', marginBottom: '90px' }}>
-          <p className="problem">{problem}</p>
-          <pre className="examples">{examples}</pre>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', width: '800px' }}>
-            <Editor
-              onChange={this.onCodeChange}
-              debounceTimeout={500}
-              ref={(editor) => { this.editor = editor; }}
-            />
-            <div style={{ marginLeft: '2em' }}>
-              <p> Test your program: </p>
-              <textarea type="text" id="name" className="test-area" value={testValue} onChange={this.handleValue} />
-              <div className="result">
-                Result:
-                {data}
+        <div className="content">
+          <Row className="top-row">
+            <Col xs={24} className="text">
+              <div>
+                <h1 className="problem">{problem}</h1>
+                <Divider />
               </div>
-            </div>
-          </div>
-          {val}
-          <div style={{ display: 'flex' }}>
-            <div>
-              {this.renderErrors()}
-            </div>
-            <div>
-              <button type="button" onClick={this.onSubmit}> Submit </button>
-            </div>
-          </div>
-          {results.length !== 0 && (
-            <div className="tests">
-              {this.renderTests()}
-            </div>
-          )}
+              <h3 className="examples-title">Examples</h3>
+              <pre className="examples">{examples}</pre>
+            </Col>
+          </Row>
+          <Row className="code-row">
+            <Col xs={24} md={12}>
+              <Editor
+                onChange={this.onCodeChange}
+                debounceTimeout={500}
+                ref={(editor) => { this.editor = editor; }}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ height: 'calc(100% - 25px)' }}>
+                <div style={{ display: 'flex', height: '28px' }}>
+                  <Button className="hints-button" 
+                    disabled={!this.state.compilerErrors || this.state.compilerErrors.length === 0}
+                    onClick={() => this.setState({ isShowingErrors: !this.state.isShowingErrors })}
+                  >Show Hints</Button>
+                  <h3 className="code-review">Code review</h3>
+                </div>
+                <Divider />
+                <div className="errors">
+                  {this.renderErrors()}
+                </div>
+              </div>
+            </Col>
+          </Row>
+          <Row className="test-row">
+            <Col xs={24} md={12}>
+              <h3 className="tests-title">Tests</h3>
+              <Divider />
+              <div className="tests">
+                {this.renderTests()}
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <h3 className="tests-title">Debug</h3>
+              <Divider />
+              <div style={{ width: '100%', display: 'flex' }}>
+                <Input type="text" id="name" className="test-area" placeholder="Function call..." value={testValue} onChange={this.handleValue} />
+                <Button type="button" className="test-button" onClick={this.onSubmit}> Debug </Button>
+              </div>
+              <div className="debugger">
+                {val}
+              </div>
+            </Col>
+          </Row>
+          <div style={{ height: "20vh", width: "100%" }}></div>
         </div>
       </div>
     );

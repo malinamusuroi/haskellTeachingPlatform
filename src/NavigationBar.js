@@ -8,6 +8,7 @@ import './NavigationBar.css';
 const { SubMenu } = Menu;
 
 const PROBLEMS = [
+  'sum',
   'twoSame',
   'pos',
   'precedes',
