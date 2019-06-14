@@ -2,3 +2,12 @@
     font-size: 1.4em;
     font-weight: bold
 }
+
+.ant-menu {
+    background: rgb(30, 30, 30);
+    color: white;
+}
+
+.ant-menu-vertical * {
+    color: rgba(0, 0, 0, 0.65);
+}

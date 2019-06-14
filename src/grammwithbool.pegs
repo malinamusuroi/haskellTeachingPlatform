@@ -77,11 +77,11 @@ functionDefinitionTypeSignature = functionName:functionName whitespace* "::" whi
 / "_" { return { kind: "typeSignature", isUnderscore: true, text: text() } }
 
 arrayType = "["whitespace* type:type whitespace* "]" { return { kind: "arrayType", name: type.name, lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, isUnderscore: type.isUnderscore } }
+    endPosition: location().end.column, isUnderscore: type.isUnderscore, text: text() } }
 type = arrayType:arrayType { return arrayType }
-     / type:[A-Za-z]+ { return {kind: "type", name: type.join(""), lineNumber: location().start.line, startPosition: location().start.column,
+     / type:[A-Za-z]+ { return {kind: "type", name: type.join(""), text: text(), lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column} }
-     / "_" { return { kind: "type", lineNumber: location().start.line, startPosition: location().start.column,
+     / "_" { return { kind: "type", lineNumber: location().start.line, text: text(), startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true } }
      
 arrowAndType = whitespace* "->" whitespace* type:type { return type };

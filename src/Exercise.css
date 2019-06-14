@@ -66,6 +66,10 @@ pre {
   height: 100%;
 }
 
+.test-row {
+  padding-top: 1em;
+}
+
 .ant-divider-horizontal {
   margin: 8px 0 8px 0;
 }

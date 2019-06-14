@@ -166,7 +166,7 @@ class Exercise extends Component {
         }];
       } else {
         errors = [{
-          name: '', startPosition: 0, endPosition: 50, lineNumber: 0, message: `Parser error: ${err}`,
+          name: '', startPosition: err.location.start.column, endPosition: err.location.end.column, lineNumber: err.location.start.line, message: `Parser error: ${err}`,
         }];
       }
     }

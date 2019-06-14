@@ -8,7 +8,7 @@ export default function visit(node1, node2, savedValue, array, isPerfect) {
     if (!node2.isUnderscore) {
       if (node1.kind !== node2.kind) {
         array.push({
-          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You wrote '${node1.text}', but we're expecting ${description(node2.kind)}`,
+          name: node1.kind, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You wrote '${node1.text || node1.name}', but we're expecting ${description(node2.kind)}`,
         });
       } else {
         switch (node1.kind) {
@@ -48,7 +48,7 @@ function description(kind) {
     case 'functionName': return "a function name or a variable name, such as 'f' or 'x'";
     case 'bracketedExpression': return "a bracketed expression, such as '(1 + 2)'";
     case 'arrayType': return "a list type, such as '[Int]'";
-    case 'type': return "a type, such as 'Int'";
+    case 'type': return "a non-list type, such as 'Int'";
     case 'bool': return "a boolean literal, such as True or False";
     case 'list': return "a list literal, such as [1,2,3]";
     case 'expression': return "an expression, such as '1 + 2'";
@@ -70,7 +70,7 @@ function checkDollarValues(userValue, rightValue, array, savedValue) {
       value = true;
       if (element.correspondent !== userValue.name) {
         array.push({
-          name: userValue.name, lineNumber: userValue.lineNumber, startPosition: userValue.startPosition, endPosition: userValue.endPosition, message: `The value '${userValue.name}' is not the expected one. Use '${element.correspondent}' instead. `,
+          name: userValue.name, lineNumber: userValue.lineNumber, startPosition: userValue.startPosition, endPosition: userValue.endPosition, message: `The value '${userValue.name} is not what we expected`,
         });
       }
     }
@@ -84,7 +84,7 @@ function visitTypeSignature(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     if (node1.types.length !== node2.types.length) {
       array.push({
-        name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `Expected ${node2.types.length} types in the type signature instead of ${node1.types.length}. `,
+        name: '', lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You wrote a type signature with ${node1.types.length} types, but we expected a different number`,
       });
     } else {
       for (let i = 0; i < node1.types.length; i += 1) {
@@ -136,7 +136,7 @@ function visitType(node1, node2, savedValue, array) {
   if (!node2.isUnderscore) {
     if (node1.name !== node2.name) {
       array.push({
-        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You defined the type signature to be ${node1.text}, but we're expecting another type signature`,
+        name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You used the type '${node1.name}', but we're expecting another type`,
       });
     }
   }
@@ -149,7 +149,7 @@ function visitArrayType(node1, node2, savedValue, array) {
   }
   if (node1.name !== node2.name) {
     array.push({
-      name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You defined the type signature to be ${node1.text}, but we're expecting another type signature`,
+      name: node1.name, lineNumber: node1.lineNumber, startPosition: node1.startPosition, endPosition: node1.endPosition, message: `You used the type '${node1.text}', but we're expecting another type`,
     });
   }
   return array;

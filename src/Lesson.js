@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { Component } from 'react';
 import './Lesson.css';
-import { Row, Col } from 'antd';
+import { Row, Col, Input, Button, Divider, Icon } from 'antd';
 import { parse } from './parser2';
 import NavBar from './NavigationBar';
 
@@ -56,17 +56,19 @@ class Lesson extends Component {
         <NavBar> </NavBar>
         <div className="content">
           <h1 className="title">Lists </h1>
-          <p>
-            At the simplest level lists are put together using two types of building blocks:
-             [] is used to build an expty list
-             : is an infix operator which adds a new element to the front of the list.
-            Therefore 1: 2: [] means [1,2]
-          </p>
-          <b style={{ fontSize: '20px' }}>How do we represent lists? </b>
-          <p style={{ fontSize: '18px' }}>Pattern matching</p>
+          <Divider />
+          <div style={{marginBottom: '2em'}}>
+           Lists are can be represented using two types of building blocks: 
+                <b> [] is used to build an empty list </b> <br />
+                <b> : is an infix operator which adds a new element to the front of the list. </b> <br />
+             Therefore 1: 2: [] means [1,2]  <br />
+          </div>
+          <strong style={{ fontSize: '18px', marginTop: '3em' }}>Pattern matching</strong>
+          <div>
           A list is empty if we use [] and if it is not empty we represent it
-          as x:xs for some x and xs
-          <p> Let's take the same function and try to express it using pattern matching: </p>
+          as (x:xs) for some element x and the list xs
+          </div>
+          <p> Let's write the sum function that calculates the sum of elemnts of a list:</p>
           <Row>
             <Col xs={24} md={12} className="code-editor">
               <div id="code" className="code-example">
@@ -74,22 +76,22 @@ class Lesson extends Component {
                 <br />
                 sum [] = 0
                 <br />
-                sum(x:xs)= x + sum xs
+                sum (x:xs)= x + sum xs
                 <br />
               </div>
               <div>
-                <textarea placeholder="Prelude >>" style={{ width: '100%', height: '90px', backgroundColor: 'rgb(232,232,232)' }} type="text" value={testValue} onChange={this.handleValue} />
-                <button type="button" onClick={this.onSubmit}> See output</button>
+                <textarea placeholder="Prelude >>" className="prelude-area" type="text" value={testValue} onChange={this.handleValue} />
+                <Button type="button" onClick={this.onSubmit}> See output</Button>
                 <div style={{ marginLeft: '10px' }}>
                   Result:
                   {data}
                 </div>
               </div>
             </Col>
-            <Col xs={24} md={12}>
-              <b> How does it work?  </b>
-              <br />
-              <div>
+            <Col xs={24} md={12} style={{ paddingTop: '2em' }}>
+              <b style={{ marginBottom: '0.1em', fontSize: '1.3em', marginTop: '1.7em' }}> See visual representation </b>
+              <Divider />
+              <div style={{ paddingTop: '0.1em' }}>
                 <HaskellJSProgram
                   defaultValue="sum [10, 20, 30]"
                 />
