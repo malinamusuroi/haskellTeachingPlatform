@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 window.functions['||'] = {
     name: '||',
     englishName: 'or',

@@ -27,16 +27,14 @@ app.listen(port, (error) => {
   }
 });
 
-const escapeShell = (cmd) => {
-  return cmd.replace(/(["\s'$`\\])/g,'\\$1');
-};
+const escapeShell = cmd => cmd.replace(/(["\s'$`\\])/g, '\\$1');
 
 function makeid(length) {
-  var result           = '';
-  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var charactersLength = characters.length;
-  for ( var i = 0; i < length; i++ ) {
-     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i += 1) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
 }
@@ -69,7 +67,6 @@ app.post('/compile', (req, res) => {
       console.log('exec error: ', error);
       return;
     }
-    console.log("responseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", response, stdout);
     response = stdout.substring(stdout.indexOf('*Main') + 1);
     res.json({
       code: functionCall,

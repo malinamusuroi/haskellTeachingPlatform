@@ -58,6 +58,7 @@ export default class Editor extends Component {
   }
 
   editorDidMount = (editor) => {
+    // eslint-disable-next-line no-undef
     editor.addCommand(monaco.KeyCode.Enter, () => {
       const { value } = this.state;
       const { onChange } = this.props;

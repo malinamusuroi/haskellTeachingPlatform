@@ -21,21 +21,17 @@ export default class NavBar extends Component {
   };
 
   handleClick = (e) => {
-    // eslint-disable-next-line no-console
-    console.log('click ', e);
     this.setState({
       current: e.key,
     });
   };
 
-  renderProblemLinks = () => {
-    return PROBLEMS.map((problemName, index) => (
-      <Menu.Item key={`setting:${problemName}`}>
-        <Link to={`/exercise/${problemName}`} />
-        {`Problem ${index + 1}: ${problemName}`}
-      </Menu.Item>
-    ));
-  }
+  renderProblemLinks = () => PROBLEMS.map((problemName, index) => (
+    <Menu.Item key={`setting:${problemName}`}>
+      <Link to={`/exercise/${problemName}`} />
+      {`Problem ${index + 1}: ${problemName}`}
+    </Menu.Item>
+  ))
 
   render() {
     const { current } = this.state;

@@ -2,7 +2,9 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { Component } from 'react';
 import './Lesson.css';
-import { Row, Col, Input, Button, Divider, Icon, Card } from 'antd';
+import {
+  Row, Col, Button, Divider, Icon,
+} from 'antd';
 import { parse } from './parser2';
 import NavBar from './NavigationBar';
 
@@ -36,9 +38,8 @@ class Lesson extends Component {
   }
 
   updateFunctionList = (code) => {
-    var newFunctions = parse(code)
-      //+ "\n\n", { startRule: 'functionDefinitionList' });
-    newFunctions.forEach(function (func) {
+    const newFunctions = parse(code);
+    newFunctions.forEach((func) => {
       if ([':', '+', '-'].indexOf(func.name) < 0) {
         window.functions[func.name] = func;
       }
@@ -57,13 +58,15 @@ class Lesson extends Component {
         <div className="content">
           <h1 className="title">Getting Started with Lists </h1>
           <Divider />
-          <div style={{marginBottom: '2em', marginTop: '1em' }}>
-           Lists are can be represented using two types of building blocks: 
+          <div style={{ marginBottom: '2em', marginTop: '1em' }}>
+           Lists are can be represented using two types of building blocks:
             <ul style={{ margin: 0 }}>
               <li> [] is used to build an empty list </li>
-              <li> : is an infix operator which adds a new element to the front of the list. </li> <br />
+              <li> : is an infix operator which adds a new element to the front of the list. </li>
+              <br />
             </ul>
-            Therefore (1 : 2 : []) means [1,2].  <br />
+            Therefore (1 : 2 : []) means [1,2].
+            <br />
           </div>
           <strong style={{ fontSize: '18px', marginTop: '3em' }}>Pattern matching</strong>
           <div>
@@ -84,8 +87,13 @@ class Lesson extends Component {
               <div>
                 <textarea placeholder="Enter a call to sum, such as sum [1,2,3]..." className="prelude-area" type="text" value={testValue} onChange={this.handleValue} />
                 <Button type="button" onClick={this.onSubmit}> Execute </Button>
-                <div style={{ marginLeft: '10px', float: 'right'}}>
-                  { data && <span><span>Result: </span>{data}</span> }
+                <div style={{ marginLeft: '10px', float: 'right' }}>
+                  { data && (
+                  <span>
+                    <span>Result: </span>
+                      {data}
+                  </span>
+                  )}
                 </div>
               </div>
             </Col>
@@ -100,9 +108,9 @@ class Lesson extends Component {
             </Col>
           </Row>
           <div style={{ margin: '20px 0' }}>
-          <p>
-            <strong> Here are some predefined functions over lists: </strong>
-          </p>
+            <p>
+              <strong> Here are some predefined functions over lists: </strong>
+            </p>
             <strong> !! </strong>
             :: [a] -&gt; Int -&gt; a ---- The !! operator (sometimes pronounced “at”)
             performs list indexing (the head is index 0):
@@ -114,7 +122,11 @@ class Lesson extends Component {
               <br />
             </div>
           </div>
-          <strong><Icon type="warning" style={{color: 'black'}}/> Note</strong>: The indices of Haskell lists start at 0, not 1.
+          <strong>
+            <Icon type="warning" style={{ color: 'black' }} />
+               Note
+          </strong>
+            : The indices of Haskell lists start at 0, not 1.
           <div style={{ marginTop: '20px' }}>
             <strong> (++) </strong>
             :: [a] -&gt; [a] -&gt; [a] ---- The binary operator ++ (pronounced “concatenate”

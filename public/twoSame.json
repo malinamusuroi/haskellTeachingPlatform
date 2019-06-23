@@ -13,7 +13,7 @@
         },
         {
             "pattern": "_ == True",
-            "message": "Don't fuck up."
+            "message": "The pattern 'x == True' is redundant. It's equivalent to just 'x'."
         }
     ],
     "wrongPatterns": [],
