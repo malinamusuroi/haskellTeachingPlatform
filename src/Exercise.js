@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import './Exercise.css';
+import { Row, Col, Input, Button, Divider, Icon } from 'antd';
 import { parse } from './parser2';
 import { parse as expressionParse } from './parser';
 import visitWithExpression from './visitWithExpression';
 import Editor from './Editor';
 import NavBar from './NavigationBar';
 import visit from './visitor';
-import { Row, Col, Input, Button, Divider, Icon } from 'antd';
 import HaskellJSProgram from './hsjs/ProgramComponent';
 
 class Exercise extends Component {
@@ -58,6 +58,7 @@ class Exercise extends Component {
         });
       })
       .catch(console.error);
+    this.editor.clear();
   }
 
   componentDidMount = () => {
@@ -82,18 +83,19 @@ class Exercise extends Component {
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then(res => {
+    }).then((res) => {
       console.timeEnd('compile');
-      return res.json()
-    }).then(result => {
-      this.setState({ data: result.body })
+      return res.json();
+    }).then((result) => {
+      this.setState({ data: result.body });
       this.setState({
         val: (<div>
           <HaskellJSProgram
+            key={this.state.testValue}
             defaultValue={this.state.testValue}
           />
-        </div>)
-      })
+              </div>),
+      });
     })
       // eslint-disable-next-line no-console
       .catch(console.error);
@@ -106,55 +108,57 @@ class Exercise extends Component {
   };
 
   updateFunctionList = (code) => {
-    var newFunctions = parse(code)
-      //+ "\n\n", { startRule: 'functionDefinitionList' });
-    newFunctions.forEach(function (func) {
+    let newFunctions = parse(code);
+    // + "\n\n", { startRule: 'functionDefinitionList' });
+    newFunctions.forEach((func) => {
       if ([':', '+', '-'].indexOf(func.name) < 0) {
         window.functions[func.name] = func;
       }
     });
   }
-  
+
   compareWithModel = (code) => {
     let errors = [];
     this.setState({ isShowingErrors: false });
 
     try {
-      console.time('parse');
       parse(code);
-      console.timeEnd('parse');
       const savedValues = [];
       const { correctModel, badExpressions, badPatterns } = this.state;
       const parse1 = parse(code)[0];
       const parse2 = parse(correctModel)[0];
 
-      console.time('visit');
       errors = visit(parse1, parse2, savedValues, []);
-      console.timeEnd('visit');
+
+      errors = Array.from(new Set(errors));
 
       this.setState({ savedValues });
       badExpressions.forEach((exp) => {
         const parse3 = parse(code)[0];
         const parse4 = expressionParse(exp.pattern);
 
-        console.time('visitWithExpression');
         let instructorErrors = visitWithExpression(parse3, parse4, [])
           .filter(error => error != null);
-        console.timeEnd('visitWithExpression');
 
         if (instructorErrors.length !== 0) {
           instructorErrors = instructorErrors.map(err => ({
             ...err,
             message: exp.message,
           }));
+          const locations = instructorErrors.map(({ lineNumber, startPosition, endPosition }) => ({ lineNumber, startPosition, endPosition }));
+          errors = errors.filter(({ lineNumber, startPosition, endPosition }) => (
+            !locations.find(location => Math.abs(location.lineNumber - lineNumber) < 2 &&
+                                        Math.abs(location.startPosition - startPosition) < 2 &&
+                                        Math.abs(location.endPosition - endPosition < 2))
+          ));
         }
-        errors = errors.concat(instructorErrors);
+        errors = instructorErrors.concat(errors);
       });
 
       badPatterns.forEach((exp) => {
         const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], []);
         if (instructorErrors.length === 0) {
-          errors.push({
+          errors.unshift({
             name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
           });
         }
@@ -227,14 +231,41 @@ class Exercise extends Component {
     }));
   }
 
+  pad = (num) => {
+    // if (num > 9) {
+    //   return num;
+    // }
+    // return `0${num}`;
+    return num;
+  };
+
   renderErrors = () => {
-    const formatDiagnostic = ({ lineNumber, startPosition, message }) => `${lineNumber}:${startPosition}: ${message}\n`;
+    const formatDiagnostic = ({ lineNumber, startPosition, message }) => `${this.pad(lineNumber)}:${this.pad(startPosition)}: ${message}\n`;
     const { compilerErrors, isShowingErrors } = this.state;
     if (compilerErrors !== undefined && compilerErrors.length !== 0) {
       return (
         <div>
           {isShowingErrors
-            && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
+            && (
+              <div className="hint-solution">
+                {compilerErrors.map(error => (
+                  <div key={error.message} style={{ paddingBottom: '10px' }}>
+                    <p className="error-display">{formatDiagnostic(error)}</p>
+                    { error.solution && 
+                      <div>
+                        <Button className="solution-button" onClick={() => this.setState({ displayedSolution: error })}>See solution</Button>
+                        {error.solution && this.state.displayedSolution == error && (
+                          <div className="solution">
+                            <span>Expected: </span>
+                            <pre>{error.solution}</pre>
+                          </div>
+                        )}
+                      </div>}
+                  </div>
+                ))
+                }
+              </div>
+            )
           }
         </div>
       );
@@ -255,19 +286,25 @@ class Exercise extends Component {
       return <p>Write some code to execute tests.</p>;
     }
 
-    return results.map(elem => {
+    return results.map((elem) => {
       let val;
       if (elem.result === true) {
-        val = <Icon type="check" style={{ color: "green" }}/>
+        val = <Icon type="check" style={{ color: 'green' }} />;
       } else if (elem.result === false) {
-        val = <Icon type="close" style={{ color: "red" }}/>
+        val = <Icon type="close" style={{ color: 'red' }} />;
       } else {
-        val = <span><Icon type="warning" theme="filled" style={{ color: "rgb(236, 205, 18)" }}/> Compiler Error</span>
+        val = <span>
+<Icon type="warning" theme="filled" style={{ color: "rgb(236, 205, 18)" }}/>
+{' '}
+Compiler Error
+</span>;
       }
-      return <div key={elem.value} className="results">
+      return (
+<div key={elem.value} className="results">
         <pre>{elem.value}</pre>
         {elem.result !== '' && elem.value !== undefined && <span title={elem.stderr}>{val}</span>}
       </div>
+);
     });
   }
 
@@ -307,10 +344,13 @@ class Exercise extends Component {
             <Col xs={24} md={12}>
               <div style={{ height: 'calc(100% - 25px)' }}>
                 <div style={{ display: 'flex', height: '28px' }}>
-                  <Button className="hints-button" 
+                  <Button className="hints-button"
                     disabled={!this.state.compilerErrors || this.state.compilerErrors.length === 0}
                     onClick={() => this.setState({ isShowingErrors: !this.state.isShowingErrors })}
-                  >Show Hints</Button>
+                  >
+                Show Hints
+
+                  </Button>
                   <h3 className="code-review">Code review</h3>
                 </div>
                 <Divider />
@@ -340,7 +380,7 @@ class Exercise extends Component {
               </div>
             </Col>
           </Row>
-          <div style={{ height: "20vh", width: "100%" }}></div>
+          <div style={{ height: '20vh', width: '100%' }} />
         </div>
       </div>
     );

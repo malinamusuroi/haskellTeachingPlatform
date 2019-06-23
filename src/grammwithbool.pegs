@@ -99,6 +99,7 @@ functionDefinitionPatternLine
     doesMatch: part.doesMatch,
     apply: part.apply,
   }}
+  / "\n"* "_" { return { kind: "pattern", isUnderscore: true } }
    / "\n" functionName:functionName patternArguments:patternWithWhitespace* whitespace? patternGuards:patternGuard* { return {
     definitionLine: text(),
     numberOfArguments: patternArguments.length,
@@ -121,7 +122,6 @@ functionDefinitionPatternLine
     },
     text: text()
   }; } 
-  / "\n"* "_" { return { kind: "pattern", isUnderscore: true } };
 
 functionDefinitionPatternPartOfLine
   = patternArguments:patternWithWhitespace* whitespace? "=" whitespace* exp:expressionWithFunction { return {

@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { Component } from 'react';
 import './Lesson.css';
-import { Row, Col, Input, Button, Divider, Icon } from 'antd';
+import { Row, Col, Input, Button, Divider, Icon, Card } from 'antd';
 import { parse } from './parser2';
 import NavBar from './NavigationBar';
 
@@ -55,13 +55,15 @@ class Lesson extends Component {
       <div>
         <NavBar> </NavBar>
         <div className="content">
-          <h1 className="title">Lists </h1>
+          <h1 className="title">Getting Started with Lists </h1>
           <Divider />
-          <div style={{marginBottom: '2em'}}>
+          <div style={{marginBottom: '2em', marginTop: '1em' }}>
            Lists are can be represented using two types of building blocks: 
-                <b> [] is used to build an empty list </b> <br />
-                <b> : is an infix operator which adds a new element to the front of the list. </b> <br />
-             Therefore 1: 2: [] means [1,2]  <br />
+            <ul style={{ margin: 0 }}>
+              <li> [] is used to build an empty list </li>
+              <li> : is an infix operator which adds a new element to the front of the list. </li> <br />
+            </ul>
+            Therefore (1 : 2 : []) means [1,2].  <br />
           </div>
           <strong style={{ fontSize: '18px', marginTop: '3em' }}>Pattern matching</strong>
           <div>
@@ -80,11 +82,10 @@ class Lesson extends Component {
                 <br />
               </div>
               <div>
-                <textarea placeholder="Prelude >>" className="prelude-area" type="text" value={testValue} onChange={this.handleValue} />
-                <Button type="button" onClick={this.onSubmit}> See output</Button>
-                <div style={{ marginLeft: '10px' }}>
-                  Result:
-                  {data}
+                <textarea placeholder="Enter a call to sum, such as sum [1,2,3]..." className="prelude-area" type="text" value={testValue} onChange={this.handleValue} />
+                <Button type="button" onClick={this.onSubmit}> Execute </Button>
+                <div style={{ marginLeft: '10px', float: 'right'}}>
+                  { data && <span><span>Result: </span>{data}</span> }
                 </div>
               </div>
             </Col>
@@ -98,7 +99,7 @@ class Lesson extends Component {
               </div>
             </Col>
           </Row>
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ margin: '20px 0' }}>
           <p>
             <strong> Here are some predefined functions over lists: </strong>
           </p>
@@ -113,12 +114,10 @@ class Lesson extends Component {
               <br />
             </div>
           </div>
-          <div style={{ backgroundColor: '#FFFACD', marginTop: '7px' }}>
-            Note ❗️ The index of the elements in the list starts from 0
-          </div>
+          <strong><Icon type="warning" style={{color: 'black'}}/> Note</strong>: The indices of Haskell lists start at 0, not 1.
           <div style={{ marginTop: '20px' }}>
             <strong> (++) </strong>
-            :: [a] --&gt; [a] --&gt; [a] ---- The binary operator ++ (pronounced “concatenate”
+            :: [a] -&gt; [a] -&gt; [a] ---- The binary operator ++ (pronounced “concatenate”
             or “append”) joins two lists of the same type to form a new list e.g.
             <br />
           </div>
@@ -141,7 +140,7 @@ class Lesson extends Component {
           </div>
           <div style={{ marginTop: '20px' }}>
             <strong> drop </strong>
-            :: Int --&gt; [a] --&gt; [a] ---- drop n xs returns the remainder of the list after
+            :: Int -&gt; [a] -&gt; [a] ---- drop n xs returns the remainder of the list after
             the first n elements have been removed
             <br />
             <div style={{ fontWeight: 'bold', width: '290px' }}>

@@ -1,6 +1,6 @@
 {
     "problem": "Write a function which returns whether a list is lexicographically smaller than another list.",
-    "model": "$precedes :: [Int] -> [Int] -> Bool\n$precedes [] s' = True\n$precedes (c : cs) (c' : cs')\n| c < c' = True\n| c == c' = $precedes cs cs'\n$precedes s s' = False",
+    "model": "$precedes :: [Int] -> [Int] -> Bool\n$precedes [] s' = True\n$precedes (c : cs) (c' : cs')\n| (c < c') = True\n| (c == c') = $precedes cs cs'\n$precedes s s' = False",
     "examples": "Input: mother father. Output: False.\nInput: man woman. Output: True.",
     "wrongExpression": [
         {
@@ -13,27 +13,27 @@
         },
         {
             "pattern": "_ == True",
-            "message": "Don't use redundant comparations."
+            "message": "The pattern 'x == True' is redundant. It's equivalent to just 'x'."
         }
     ],
     "wrongPatterns": [
         {
-            "pattern": "_\ntwoSame [] = True_",
+            "pattern": "_\ntwoSame [] = True\n_",
             "message": "For a list with no elements, there will not be 2 elements the same!",
             "lineNumber": 2
         }
     ],
     "tests": [
         {
-         "value": "$precedes [1, 2, 4] [1, 2, 3]",
-         "match": "False",
-         "result": ""
-        },
-        {
             "value": "$precedes [1, 2, 3] [1, 2, 4]",
             "match": "True",
             "result": ""
         },
+        {
+            "value": "$precedes [1, 2, 4] [1, 2, 3]",
+            "match": "False",
+            "result": ""
+           },
         {
             "value": "$precedes [4, 6] [5]",
             "match": "False",

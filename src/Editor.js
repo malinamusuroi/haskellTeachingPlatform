@@ -53,6 +53,10 @@ export default class Editor extends Component {
     this.setState({ decorations, errors });
   }
 
+  clear = () => {
+    this.setState({ value: '' });
+  }
+
   editorDidMount = (editor) => {
     editor.addCommand(monaco.KeyCode.Enter, () => {
       const { value } = this.state;

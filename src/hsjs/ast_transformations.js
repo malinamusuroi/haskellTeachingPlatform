@@ -4,10 +4,12 @@ window.astNodeTypes = {};
 const _ = require('lodash');
 
 require('./functions/plus');
+require('./functions/plusplus');
 require('./functions/minus');
 require('./functions/cons');
 require('./functions/elem');
 require('./functions/or');
+require('./functions/and');
 
 var _isValidApplication = function(functionName, _arguments) {  // TODO REMOVE THIS METHOD
   if (window.functions[functionName] != undefined){

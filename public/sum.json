@@ -1,7 +1,7 @@
 {
     "problem": "Write a function computes the sum of all the elements in a list.",
     "model": "$sum :: [Int] -> Int\n$sum [] = 0\n$sum ($x : $xs) = $x + $sum $xs",
-    "examples": "Input: [3, 4, 2]. Output: [2, 4, 3].\nInput: [4, 3, 4]. Output: [4, 3, 4].",
+    "examples": "Input: [3, 4, 2]. Output: 9\nInput: [4, 3, 4]. Output: 11",
     "wrongExpression": [
         {
             "pattern": "head _",
@@ -13,6 +13,11 @@
         }
     ],
     "wrongPatterns": [
+        {
+            "pattern": "_\nsumList [] = 1\n_",
+            "message": "Since there are no elements, the sum of the elements in the list is 0, not 1",
+            "lineNumber": "2"
+        }
     ],
     "tests": [
         {
@@ -21,8 +26,8 @@
          "result": ""
         },
         {
-            "value": "$sum [3, 4, 3]",
-            "match": "10",
+            "value": "$sum []",
+            "match": "0",
             "result": ""
         },
         {

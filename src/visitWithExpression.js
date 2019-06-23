@@ -11,6 +11,7 @@ export default function visitWithExpression(node1, node2, array) {
       case 'functionApplication': return visitFunctionApplication(node1, node2, array);
       case 'functionName': return visitFunctionName(node1, node2, array);
       case 'bracketedExpression': return visitBracketedexpression(node1, node2, array);
+      case 'list': return visitList(node1, node2, array);
       case 'expression': return visitExpression(node1, node2, array);
       case 'patternGuards': return visitPatternGuards(node1, node2, array);
       default: return null;
@@ -118,6 +119,18 @@ function visitBracketedexpression(node1, node2, array) {
   }
   if (!node2.isUnderscore) {
     visitWithExpression(node1.expression, node2, array);
+  }
+  return array;
+}
+
+function visitList(node1, node2, array) {
+  if (node1.kind === node2.kind) {
+    array.push(displayErrorIfSame(node1, node2));
+  }
+  if (!node2.isUnderscore) {
+    for (let i = 0; i < node1.items.length; i += 1) {
+      visitWithExpression(node1.items[i], node2, array);
+    }
   }
   return array;
 }

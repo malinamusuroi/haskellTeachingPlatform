@@ -22,8 +22,18 @@
 }
 
 .title {
-    text-align: center;
-    font-size: 40px;
+    padding-top: 1em;
+    font-size: 30px;
+}
+
+.subtitle {
+  padding-top: 0.6em;
+
+}
+
+.code-editor.ant-col-xs-24.ant-col-md-12 {
+  padding: 0;
+  padding-top: 20px;
 }
 
 .content {
