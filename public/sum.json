@@ -12,13 +12,7 @@
             "message": "Don't use tail. Instead, use pattern matching."
         }
     ],
-    "wrongPatterns": [
-        {
-            "pattern": "_\nsumList [] = 1\n_",
-            "message": "Since there are no elements, the sum of the elements in the list is 0, not 1",
-            "lineNumber": "2"
-        }
-    ],
+    "wrongPatterns": [],
     "tests": [
         {
          "value": "$sum [4, 5, 6]",

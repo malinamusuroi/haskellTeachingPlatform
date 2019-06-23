@@ -13,7 +13,7 @@
         },
         {
             "pattern": "_ == True",
-            "message": "Don't fuck up."
+            "message": "The pattern 'x == True' is redundant. It's equivalent to just 'x'."
         }
     ],
     "wrongPatterns": [],
@@ -24,7 +24,7 @@
          "result": ""
         },
         {
-            "value": "$a [3, 4, 3]",
+            "value": "$a [3, 4, 4]",
             "match": "True",
             "result": ""
         },

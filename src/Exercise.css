@@ -131,7 +131,8 @@ pre {
 }
 
 .myInlineDecoration {
-	color:#ff472c !important;
+  color: #ff4f39 !important;
+  text-decoration: underline;
 	font-weight: bold;
 }
 .myLineDecoration {

@@ -3,7 +3,7 @@
 }
 
 start
-  = functionDefinitionList
+  = expressionWithFunction
   
   expression
   = "(" whitespace? exp:expressionWithFunction whitespace? ")" { return { 
@@ -206,6 +206,8 @@ infixFunctionName
   / ">"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '>', infix: true, text: text()}; }
   / "_" { return {id: randomId(), kind: "functionName", isUnderscore: true } }
+  / '&&' { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, name: '&&', infix: true, text: text()}; }
   
 
 integer

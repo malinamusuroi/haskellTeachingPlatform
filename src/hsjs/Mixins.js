@@ -1,4 +1,4 @@
-import React from 'react';
+/* eslint-disable */
 
 import ASTTransformations from './ast_transformations';
 
