@@ -53,7 +53,12 @@ export default class Editor extends Component {
     this.setState({ decorations, errors });
   }
 
+  clear = () => {
+    this.setState({ value: '' });
+  }
+
   editorDidMount = (editor) => {
+    // eslint-disable-next-line no-undef
     editor.addCommand(monaco.KeyCode.Enter, () => {
       const { value } = this.state;
       const { onChange } = this.props;
@@ -78,7 +83,7 @@ export default class Editor extends Component {
 
     return (
       <MonacoEditor
-        height="400"
+        height="280"
         language="haskell"
         theme="vs-dark"
         value={value}

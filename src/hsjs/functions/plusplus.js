@@ -1,15 +1,15 @@
 /* eslint-disable */
 
-window.functions['+'] = {
-  name: '+',
-  englishName: 'plus',
+window.functions['++'] = {
+  name: '++',
+  englishName: 'plusplus',
   color: 'purple',
   infix: true,
-  typeSignature: 'Int -> Int -> Int',
+  typeSignature: '[Int] -> [Int] -> [Int]',
   isValidApplication: function(_arguments) {
     return _arguments.length === 2      &&
-    _arguments[0].kind === 'int' &&
-    _arguments[1].kind === 'int';
+    _arguments[0].kind === 'list' &&
+    _arguments[1].kind === 'list';
   },
   patterns: [
     {
@@ -20,8 +20,8 @@ window.functions['+'] = {
       apply: function(_arguments){
         return {
                  id: '_' + Math.random().toString(36).substr(2, 9),
-                 kind: 'int',
-                 value: _arguments[0].value  + _arguments[1].value
+                 kind: 'list',
+                 items: _arguments[0].items.concat(_arguments[1].items),
                };
       }
     }

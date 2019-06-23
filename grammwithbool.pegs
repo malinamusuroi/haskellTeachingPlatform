@@ -3,27 +3,65 @@
 }
 
 start
-  = functionDefinitionList
+  = expressionWithFunction
+  
+  expression
+  = "(" whitespace? exp:expressionWithFunction whitespace? ")" { return { 
+  		kind: "bracketedExpression", 
+	    lineNumber: location().start.line, 
+    	startPosition: location().start.column,
+	    endPosition: location().end.column, 
+    	expression: exp,
+        functionName: exp.functionName,
+        arguments: exp.arguments,
+        text: text()
+     }}
+  / list
+  / integer
+  / bool
+  / functionName
+  / functionApplication;
+
+expressionWithFunction
+  = infixFunctionApplication 
+  / expressionWithPrefixFunction
+    
+expressionWithPrefixFunction
+ = functionApplication
+  / expression
+  / "_" { return { kind: "expression",lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, isUnderscore: true, text: text() } } 
+
+functionApplication
+  = f:functionName whitespace args:expression_list {return { id: randomId(), kind: 'functionApplication', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, functionName: f, arguments: args, text: text()}}
+  / "_" { return { id: randomId(), text: text(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, isUnderscore: true } };
+
+infixFunctionApplication
+  = left:expressionWithPrefixFunction whitespace* f:infixFunctionName whitespace* right:expressionWithFunction { return { id: randomId(), text: text(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
+
+
 
 functionDefinitionList
-  = functionDefinitionPlusWhitespace*
+  = functionDefinitionPlusWhitespace*
 
 functionDefinitionPlusWhitespace
-  = functionDefinition:functionDefinition whitespace_newline* { return functionDefinition; }
+  = functionDefinition:functionDefinition whitespace_newline* { return functionDefinition; }
 
 functionDefinition
-  = typeSignature:functionDefinitionTypeSignature patterns:functionDefinitionPatternLine* { return {
-    kind: "functionDefinition",
-    lineNumber: location().start.line,
+  = typeSignature:functionDefinitionTypeSignature patterns:functionDefinitionPatternLine* { return {
+    kind: "functionDefinition",
+    lineNumber: location().start.line,
     endLineNumber: location().end.line,
-    name: typeSignature && typeSignature.functionName && typeSignature.functionName.name,
+    name: typeSignature && typeSignature.functionName && typeSignature.functionName.name,
     nameStartPosition: typeSignature && typeSignature.functionName && typeSignature.functionName.startPosition,
     nameEndPosition:typeSignature && typeSignature.functionName && typeSignature.functionName.endPosition,
-    typeSignature: typeSignature,
-    patterns: patterns,
+    typeSignature: typeSignature,
+    patterns: patterns,
     isValidApplication: function(functionArguments) { return functionArguments.length === patterns[0].arguments.length},
     text: text()
-  }; }
+  }; }
  
 functionDefinitionTypeSignature = functionName:functionName whitespace* "::" whitespace* head:type tail:arrowAndType* whitespace* {
 	return {
@@ -39,35 +77,36 @@ functionDefinitionTypeSignature = functionName:functionName whitespace* "::" whi
 / "_" { return { kind: "typeSignature", isUnderscore: true, text: text() } }
 
 arrayType = "["whitespace* type:type whitespace* "]" { return { kind: "arrayType", name: type.name, lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, isUnderscore: type.isUnderscore } }
+    endPosition: location().end.column, isUnderscore: type.isUnderscore, text: text() } }
 type = arrayType:arrayType { return arrayType }
-     / type:[A-Za-z]+ { return {kind: "type", name: type.join(""), lineNumber: location().start.line, startPosition: location().start.column,
+     / type:[A-Za-z]+ { return {kind: "type", name: type.join(""), text: text(), lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column} }
-     / "_" { return { kind: "type", lineNumber: location().start.line, startPosition: location().start.column,
+     / "_" { return { kind: "type", lineNumber: location().start.line, text: text(), startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true } }
      
 arrowAndType = whitespace* "->" whitespace* type:type { return type };
 
 functionDefinitionPatternLine
-  = "\n" functionName:functionName part:functionDefinitionPatternPartOfLine whitespace* { return {
-    kind: "pattern",
-    name: functionName.name,
+  = "\n" functionName:functionName part:functionDefinitionPatternPartOfLine whitespace* { return {
+    kind: "pattern",
+    name: functionName.name,
     isUnderscore: functionName.isUnderscore,
-    lineNumber: part.lineNumber,
+    lineNumber: part.lineNumber,
     startPosition: functionName.startPosition,
     endPosition: functionName.endPosition,
-    arguments: part.arguments,
-    expression: part.expression,
+    arguments: part.arguments,
+    expression: part.expression,
     doesMatch: part.doesMatch,
     apply: part.apply,
-  }}
+  }}
+  / "\n"* "_" { return { kind: "pattern", isUnderscore: true } }
    / "\n" functionName:functionName patternArguments:patternWithWhitespace* whitespace? patternGuards:patternGuard* { return {
     definitionLine: text(),
     numberOfArguments: patternArguments.length,
     isUnderscore: functionName.isUnderscore,
     name: functionName.name,
-    kind: "patternGuards",
-    lineNumber: functionName.lineNumber,
+    kind: "patternGuards",
+    lineNumber: functionName.lineNumber,
     startPosition: functionName.startPosition,
     endPosition: patternArguments[patternArguments.length - 1].endPosition,
     arguments: patternArguments,
@@ -83,18 +122,17 @@ functionDefinitionPatternLine
     },
     text: text()
   }; } 
-  / "\n"* "_" { return { kind: "pattern", isUnderscore: true } };
 
 functionDefinitionPatternPartOfLine
-  = patternArguments:patternWithWhitespace* whitespace? "=" whitespace* exp:expressionWithFunction { return {
+  = patternArguments:patternWithWhitespace* whitespace? "=" whitespace* exp:expressionWithFunction { return {
     definitionLine: text(),
     numberOfArguments: patternArguments.length,
-    kind: "pattern",
-    lineNumber: location().start.line,
+    kind: "pattern",
+    lineNumber: location().start.line,
     startPosition: location().start.column,
     endPosition: location().end.column,
     arguments: patternArguments,
-    expression: exp,
+    expression: exp,
     doesMatch: function(args) {
       for (var i=0; i<patternArguments.length; i++) {
         if(patternArguments[i].doesMatch && !patternArguments[i].doesMatch(args[i])) return false;
@@ -117,82 +155,49 @@ patternGuard = [\n] whitespace* '|' whitespace* leftExp:expressionWithFunction w
                
 
 patternWithWhitespace
-  = whitespace pattern:pattern { return pattern; }
+  = whitespace pattern:pattern { return pattern; }
 
 pattern
-  = "[" whitespace* "]" { return {id: randomId(), kind: "emptyListPattern", lineNumber: location().start.line, startPosition: location().start.column,
+  = "[" whitespace* "]" { return {id: randomId(), kind: "emptyListPattern", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: "[]", text: text(), doesMatch: function(arg) { return arg.kind === "list" && arg.items.length === 0}}}
-  / "(" whitespace* left:functionName whitespace* ":" whitespace*  right:functionName whitespace* ")" { return {id: randomId(), kind: "listPattern", lineNumber: location().start.line, startPosition: location().start.column,
+  / "(" whitespace* left:functionName whitespace* ":" whitespace*  right:functionName whitespace* ")" { return {id: randomId(), kind: "listPattern", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, left: left, right: right, text: text(), doesMatch: function(arg) { return arg.kind === "list" && arg.items.length > 0 } }; }
-  / functionName
-  / integer:integer {integer.doesMatch = function(arg) { return arg.kind === "int" && arg.value === integer.value; }; return integer; }
+  / functionName
+  / integer:integer {integer.doesMatch = function(arg) { return arg.kind === "int" && arg.value === integer.value; }; return integer; }
   / bool:bool {integer.doesMatch = function(arg) { return arg.kind === "bool" && arg.value === bool.value; }; return bool; }
 
-expression
-  = "(" whitespace? exp:expressionWithFunction whitespace? ")" { return { 
-  		kind: "bracketedExpression", 
-	    lineNumber: location().start.line, 
-    	startPosition: location().start.column,
-	    endPosition: location().end.column, 
-    	expression: exp,
-        functionName: exp.functionName,
-        arguments: exp.arguments,
-        text: text()
-     }}
-  / list
-  / integer
-  / bool
-  / functionName
-  / functionApplication;
-
-expressionWithFunction
-  = infixFunctionApplication 
-  / functionApplication
-  / expression
-  / "_" { return { kind: "expression",lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, isUnderscore: true, text: text() } }
-
-functionApplication
-  = f:functionName whitespace args:expression_list {return { id: randomId(), kind: 'functionApplication', lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, functionName: f, arguments: args, text: text()}}
-  / "_" { return { id: randomId(), text: text(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column,
-    endPosition: location().end.column, isUnderscore: true } };
-
-infixFunctionApplication
-  = left:expression whitespace? f:infixFunctionName whitespace? right:expressionWithFunction { return { id: randomId(), text: text(), kind: "functionApplication", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, functionName: f, arguments: [left, right]}}
-
 expression_list
-  = exp1:expression list:(whitespace_expression)* { list.unshift(exp1); return list; }
+  = exp1:expression list:(whitespace_expression)* { list.unshift(exp1); return list; }
 
 whitespace_expression
-  = whitespace exp:expression { return exp; }
+  = whitespace exp:expression { return exp; }
 
 list
-  = "[" whitespace? list:comma_expression_list? whitespace? "]" { return { id: randomId(), text: text(), kind: "list", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, items: list || [] }; }
-  / "_" { return { kind: "list", isUnderscore: true, text: text() } }
+  = "[" whitespace? list:comma_expression_list? whitespace? "]" { return { id: randomId(), text: text(), kind: "list", lineNumber: location().start.line, startPosition: location().start.column, endPosition: location().end.column, items: list || [] }; }
+  / "_" { return { kind: "list", isUnderscore: true, text: text() } }
 
 comma_expression_list
-  = exp1:expression list:(comma_expression)* { list.unshift(exp1); return list; }
+  = exp1:expression list:(comma_expression)* { list.unshift(exp1); return list; }
 
 comma_expression
-  = whitespace? "," whitespace? exp:expression { return exp; }
+  = whitespace? "," whitespace? exp:expression { return exp; }
 
 functionName
-  = dollar:"$"? letters:[A-Za-z'"]+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = dollar:"$"? letters:[A-Za-z'"]+ { return { id: randomId(),  kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: (dollar || "") + letters.join(""), infix: false, text: text()}; }
-  / "_" { return { id: randomId(), kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
+  / "_" { return { id: randomId(), kind: "functionName", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, isUnderscore: true, text: text() } }
 
 infixFunctionName
-  = "++"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  = "++"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '++', infix: true, text: text()}; }
   / "+" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '+', infix: true, text: text()}; }
-  / "-" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  / "-" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '-', infix: true, text: text()}; }
-  / ":" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  / ":" { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: ':', infix: true, text: text()}; }
-  / "||"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+  / "||"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '||', infix: true, text: text()}; }
   / "=="{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '==', infix: true, text: text()}; }
@@ -200,13 +205,15 @@ infixFunctionName
     endPosition: location().end.column, name: '<', infix: true, text: text()}; }
   / ">"{ return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, name: '>', infix: true, text: text()}; }
-  / "_" { return {id: randomId(), kind: "functionName", isUnderscore: true } }
+  / "_" { return {id: randomId(), kind: "functionName", isUnderscore: true } }
+  / '&&' { return {id: randomId(), kind: 'functionName', lineNumber: location().start.line, startPosition: location().start.column,
+    endPosition: location().end.column, name: '&&', infix: true, text: text()}; }
   
 
 integer
-  = digits:[0-9]+ { return { id: randomId(),  text: text(), kind: "int", lineNumber: location().start.line, startPosition: location().start.column,
+  = digits:[0-9]+ { return { id: randomId(),  text: text(), kind: "int", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: parseInt(digits.join(""), 10)} ; }
-  / "_" { return { id: randomId(), kind: "int", isUnderscore: true, text: text() } }
+  / "_" { return { id: randomId(), kind: "int", isUnderscore: true, text: text() } }
 
 bool
   = 'False' { return { id: randomId(),  text: text(), kind: "bool", lineNumber: location().start.line, startPosition: location().start.column,
@@ -214,7 +221,7 @@ bool
     'True' { return { id: randomId(),  text: text(), kind: "bool", lineNumber: location().start.line, startPosition: location().start.column,
     endPosition: location().end.column, value: 'True' }}
 whitespace
-  = " "+
+  = " "+
 
 whitespace_newline
-  = [ \n]+
+  = [ \n]+

@@ -1,7 +1,75 @@
+.content {
+  width: 980px;
+  margin: auto;
+  padding-bottom: 4em;
+}
+
+@media (max-width: 980px) {
+  .content {
+      width: 100%;
+      padding: 20px;
+  }
+}
+
+.exercise .ant-col-md-12 {
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.solution {
+  border: 1px solid lightgray;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.solution pre {
+  margin: 0;
+  font-weight: bold;
+}
+
+.solution-button {
+  height: 22px;
+  padding: 0 6px;
+  margin-bottom: 1em;
+}
+
+@media (max-width: 768px) {
+  .exercise .ant-col-md-12 {
+      padding: 0;
+  }
+}
+
+.code-review {
+  padding-left: 10px;
+}
+
+.test-area {
+  margin-right: 10px;
+}
+
+.hints-button, .test-button, .test-area {
+  height: 25px;
+}
+
 .title {
   font-size: 30px;
   font-weight: bold
 }
+
+pre {
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+ }
+ 
+
+.text {
+  padding: auto;
+}
+
 .example-area {
   width: 100px;
   height: 20px;
@@ -9,19 +77,46 @@
   font-size: '13px' 
 }
 
+.code-row, .test-row {
+  height: 300px;
+}
+
+.code-row > *, .test-row > * {
+  height: 100%;
+}
+
+.test-row {
+  padding-top: 1em;
+}
+
+.ant-divider-horizontal {
+  margin: 8px 0 8px 0;
+}
+
+.errors, .tests {
+  height: 100%;
+}
+
 .code-area {
-  width: 300px;
-  height: 400px;
+  width: 100%;
+  height: 100%;
   font-weight: bold;
   font-size: 12px;
   margin-left: 20px 
 }
 
 .test-area {
-  width: 200px;
-  height: 150px;
+  width: 85%;
   font-weight: bold;
   font-size: 12px
+}
+
+.test-button {
+  width: 15%;
+}
+
+.debugger {
+  height: calc(100% - 20px);
 }
 
 .result {
@@ -30,11 +125,14 @@
   font-weight: bold
 }
 
+.top-row {
+  padding-bottom: 30px;
+  padding-left: 10px;
+}
+
 .myInlineDecoration {
-	color: red !important;
-	text-decoration: underline;
+	color:#ff472c !important;
 	font-weight: bold;
-	font-style: oblique;
 }
 .myLineDecoration {
 	background: lightblue;
@@ -52,17 +150,13 @@
 
 
 .tests {
-  margin-top: 2em;
-  background-color: #F0F0F0;
-  margin: black;
-  width: 47em;
-  padding: 2em;
+  width: 100%;
 }
 
 .problem {
-  margin-top: 3.5em;
-  font-size: 1.2em;
-  font-weight: bold
+  margin-top: 2em;
+  font-weight: 500;
+  font-size: 1.2rem;
 }
 
 .results > * {
@@ -74,7 +168,7 @@
 }
 
 .results + .results {
-  padding-top: 1.5em;
+  padding-top: 0.7em;
 }
 
 .results {
@@ -84,13 +178,19 @@
 
 .error-display {
   padding-top: 0.8em;
-  font: red;
+  font-family: inherit;
+  font-size: 1.1em;
+  display: inline;
 }
 
 .examples {
-  margin-top: 1.5em;
-  font-size: 1.2em;
-  font-family: "Times New Roman", Times, serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+  'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+  'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+.examples-title {
+  margin-top: 1rem;
 }
 
 .lineExtra {

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React from 'react';
 import NodeMixins from './Mixins';
 import DOM from 'react-dom-factories';
@@ -22,6 +23,8 @@ var List = React.createFactory(createReactClass({displayName: 'List',
     }
   },
   componentDidUpdate: function(){
+    if (!this.getDOMNode) return;
+    
     if (this.getDOMNode().tagName === "INPUT"){
       this.getDOMNode().focus();
       var length = this.getDOMNode().value.length;

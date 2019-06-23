@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import './Exercise.css';
+import {
+  Row, Col, Input, Button, Divider, Icon,
+} from 'antd';
 import { parse } from './parser2';
 import { parse as expressionParse } from './parser';
 import visitWithExpression from './visitWithExpression';
@@ -9,26 +12,32 @@ import visit from './visitor';
 import HaskellJSProgram from './hsjs/ProgramComponent';
 
 class Exercise extends Component {
+  initialState = {
+    results: [],
+    tests: [],
+    value: '',
+    problem: '',
+    data: '',
+    testValue: '',
+    examples: '',
+    correctModel: '',
+    badPatterns: '',
+    savedValues: '',
+    val: '',
+    compilerErrors: [],
+    isShowingErrors: null,
+    displayedSolution: null,
+  };
+
   constructor(props) {
     super(props);
-    this.state = {
-      results: [],
-      tests: [],
-      value: '',
-      problem: '',
-      data: '',
-      testValue: '',
-      examples: '',
-      correctModel: '',
-      badPatterns: '',
-      savedValues: '',
-      val: '',
-    };
+    this.state = this.initialState;
   }
 
   updateProblem = () => {
     const { match: { params } } = this.props;
-    if (params.exercise === this.state.exercise) {
+    const { exercise: previousExercise } = this.state;
+    if (params.exercise === previousExercise) {
       return;
     }
     const { exercise } = params;
@@ -37,6 +46,7 @@ class Exercise extends Component {
       .then(response => response.json())
       .then((myJson) => {
         this.setState({
+          ...this.initialState,
           correctModel: myJson.model,
           badExpressions: myJson.wrongExpression,
           badPatterns: myJson.wrongPatterns,
@@ -45,7 +55,9 @@ class Exercise extends Component {
           examples: myJson.examples,
         });
       })
+      // eslint-disable-next-line no-console
       .catch(console.error);
+    this.editor.clear();
   }
 
   componentDidMount = () => {
@@ -60,25 +72,21 @@ class Exercise extends Component {
     this.setState({ testValue: input.target.value });
   }
 
-  onSubmit = () => {
-    this.updateFunctionList(this.state.value);
-    const { value: inputValue, testValue } = this.state;
-    fetch('/compile', {
-      method: 'POST',
-      body: JSON.stringify({ val: inputValue, v: testValue }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then(res => res.json()).then(result => {
-      this.setState({ data: result.body })
-      this.setState({val: (<div>
-      <HaskellJSProgram
-        defaultValue={this.state.testValue}
-      />
-    </div>) })
-    })
-      // eslint-disable-next-line no-console
-      .catch(console.error);
+  onDebug = () => {
+    const { value } = this.state;
+    this.updateFunctionList(value);
+    const { testValue } = this.state;
+
+    this.setState({
+      debuggerComponent: (
+        <div>
+          <HaskellJSProgram
+            key={testValue}
+            defaultValue={testValue}
+          />
+        </div>
+      ),
+    });
   }
 
   onCodeChange = (code) => {
@@ -88,55 +96,58 @@ class Exercise extends Component {
   };
 
   updateFunctionList = (code) => {
-    var newFunctions = parse(code)
-      //+ "\n\n", { startRule: 'functionDefinitionList' });
-    newFunctions.forEach(function (func) {
+    const newFunctions = parse(code);
+    newFunctions.forEach((func) => {
       if ([':', '+', '-'].indexOf(func.name) < 0) {
         window.functions[func.name] = func;
       }
     });
   }
-  
+
   compareWithModel = (code) => {
     let errors = [];
     this.setState({ isShowingErrors: false });
 
     try {
-      console.time('parse');
       parse(code);
-      console.timeEnd('parse');
       const savedValues = [];
       const { correctModel, badExpressions, badPatterns } = this.state;
       const parse1 = parse(code)[0];
       const parse2 = parse(correctModel)[0];
 
-      console.time('visit');
       errors = visit(parse1, parse2, savedValues, []);
-      console.timeEnd('visit');
+
+      errors = Array.from(new Set(errors));
 
       this.setState({ savedValues });
       badExpressions.forEach((exp) => {
         const parse3 = parse(code)[0];
         const parse4 = expressionParse(exp.pattern);
 
-        console.time('visitWithExpression');
         let instructorErrors = visitWithExpression(parse3, parse4, [])
           .filter(error => error != null);
-        console.timeEnd('visitWithExpression');
 
         if (instructorErrors.length !== 0) {
           instructorErrors = instructorErrors.map(err => ({
             ...err,
             message: exp.message,
           }));
+          const locations = instructorErrors.map(({ lineNumber, startPosition, endPosition }) => ({
+            lineNumber, startPosition, endPosition,
+          }));
+          errors = errors.filter(({ lineNumber, startPosition, endPosition }) => (
+            !locations.find(location => Math.abs(location.lineNumber - lineNumber) < 2
+                                        && Math.abs(location.startPosition - startPosition) < 2
+                                        && Math.abs(location.endPosition - endPosition < 2))
+          ));
         }
-        errors = errors.concat(instructorErrors);
+        errors = instructorErrors.concat(errors);
       });
 
       badPatterns.forEach((exp) => {
         const instructorErrors = visit(parse(code)[0], parse(exp.pattern)[0], [], []);
         if (instructorErrors.length === 0) {
-          errors.push({
+          errors.unshift({
             name: 'Instructor error', lineNumber: exp.lineNumber, startPosition: 1, endPosition: 70, message: exp.message,
           });
         }
@@ -148,7 +159,7 @@ class Exercise extends Component {
         }];
       } else {
         errors = [{
-          name: '', startPosition: 0, endPosition: 50, lineNumber: 0, message: `Parser error: ${err}`,
+          name: '', startPosition: err.location.start.column, endPosition: err.location.end.column, lineNumber: err.location.start.line, message: `Parser error: ${err}`,
         }];
       }
     }
@@ -196,10 +207,14 @@ class Exercise extends Component {
         'Content-Type': 'application/json',
       },
     }).then(res => res.json()).then((result) => {
-      if (!result.isError) {
+      if (result.isRuntimeError) {
+        testsToRun[index].result = false;
+        testsToRun[index].stderr = result.body;
+      } else if (!result.isError) {
         testsToRun[index].result = result.body.includes(elem.match);
       } else {
         testsToRun[index].result = 'compiler error';
+        testsToRun[index].stderr = result.body;
       }
       this.setState({ results: testsToRun });
     }));
@@ -207,36 +222,73 @@ class Exercise extends Component {
 
   renderErrors = () => {
     const formatDiagnostic = ({ lineNumber, startPosition, message }) => `${lineNumber}:${startPosition}: ${message}\n`;
-    const { compilerErrors } = this.state;
+    const { compilerErrors, isShowingErrors, displayedSolution } = this.state;
+
     if (compilerErrors !== undefined && compilerErrors.length !== 0) {
-      const { isShowingErrors } = this.state;
       return (
-        <div style={{ marginLeft: '9px'}}>
-          <button type="button" onClick={() => this.setState({ isShowingErrors: true })}>Get hints</button>
+        <div>
           {isShowingErrors
-            && <pre className="error-display">{compilerErrors.map(formatDiagnostic)}</pre>
+            && (
+              <div className="hint-solution">
+                {compilerErrors.map(error => (
+                  <div key={error.message} style={{ paddingBottom: '10px' }}>
+                    <p className="error-display">{formatDiagnostic(error)}</p>
+                    { error.solution && (
+                      <div>
+                        <Button className="solution-button" onClick={() => this.setState({ displayedSolution: error })}>See solution</Button>
+                        {error.solution && displayedSolution == error && (
+                          <div className="solution">
+                            <span>Expected: </span>
+                            <pre>{error.solution}</pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+                }
+              </div>
+            )
           }
         </div>
       );
     }
-    return null;
+    return (
+      isShowingErrors ? (
+        <div>
+          <p>No hints to show.</p>
+        </div>
+      ) : null
+    );
   }
 
   renderTests = () => {
     const { results } = this.state;
-    return results.map(elem => {
-      let val;
+
+    if (results.length === 0) {
+      return <p>Write some code to execute tests.</p>;
+    }
+
+    return results.map((elem) => {
+      let testIcon;
       if (elem.result === true) {
-        val = '✅'
+        testIcon = <Icon type="check" style={{ color: 'green' }} />;
       } else if (elem.result === false) {
-        val = '❌'
+        testIcon = <Icon type="close" style={{ color: 'red' }} />;
       } else {
-        val = '⚠️ Compiler Error: The tests cannot be run'
+        testIcon = (
+          <span>
+            <Icon type="warning" theme="filled" style={{ color: 'rgb(236, 205, 18)' }} />
+            Compiler Error
+          </span>
+        );
       }
-      return <div key={elem.value} className="results">
-        <pre>{elem.value}</pre>
-        {elem.result !== '' && elem.value !== undefined && <span>{val}</span>}
-      </div>
+      return (
+        <div key={elem.value} className="results">
+          <pre>{elem.value}</pre>
+          {elem.result !== '' && elem.value !== undefined && <span title={elem.stderr}>{testIcon}</span>}
+        </div>
+      );
     });
   }
 
@@ -244,48 +296,74 @@ class Exercise extends Component {
     const {
       problem,
       testValue,
-      data,
-      results,
       examples,
-      val,
+      debuggerComponent,
+      compilerErrors,
+      isShowingErrors,
     } = this.state;
 
-
     return (
-      <div>
+      <div className="exercise">
         <NavBar> </NavBar>
-        <div style={{ width: '980px', margin: '50px', marginBottom: '90px' }}>
-          <p className="problem">{problem}</p>
-          <pre className="examples">{examples}</pre>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', width: '800px' }}>
-            <Editor
-              onChange={this.onCodeChange}
-              debounceTimeout={500}
-              ref={(editor) => { this.editor = editor; }}
-            />
-            <div style={{ marginLeft: '2em' }}>
-              <p> Test your program: </p>
-              <textarea type="text" id="name" className="test-area" value={testValue} onChange={this.handleValue} />
-              <div className="result">
-                Result:
-                {data}
+        <div className="content">
+          <Row className="top-row">
+            <Col xs={24} className="text">
+              <div>
+                <h1 className="problem">{problem}</h1>
+                <Divider />
               </div>
-            </div>
-          </div>
-          {val}
-          <div style={{ display: 'flex' }}>
-            <div>
-              {this.renderErrors()}
-            </div>
-            <div>
-              <button type="button" onClick={this.onSubmit}> Submit </button>
-            </div>
-          </div>
-          {results.length !== 0 && (
-            <div className="tests">
-              {this.renderTests()}
-            </div>
-          )}
+              <h3 className="examples-title">Examples</h3>
+              <pre className="examples">{examples}</pre>
+            </Col>
+          </Row>
+          <Row className="code-row">
+            <Col xs={24} md={12}>
+              <Editor
+                onChange={this.onCodeChange}
+                debounceTimeout={500}
+                ref={(editor) => { this.editor = editor; }}
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ height: 'calc(100% - 25px)' }}>
+                <div style={{ display: 'flex', height: '28px' }}>
+                  <Button
+                    className="hints-button"
+                    disabled={!compilerErrors || compilerErrors.length === 0}
+                    onClick={() => this.setState({ isShowingErrors: !isShowingErrors })}
+                  >
+                    Show Hints
+                  </Button>
+                  <h3 className="code-review">Code review</h3>
+                </div>
+                <Divider />
+                <div className="errors">
+                  {this.renderErrors()}
+                </div>
+              </div>
+            </Col>
+          </Row>
+          <Row className="test-row">
+            <Col xs={24} md={12}>
+              <h3 className="tests-title">Tests</h3>
+              <Divider />
+              <div className="tests">
+                {this.renderTests()}
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <h3 className="tests-title">Debug</h3>
+              <Divider />
+              <div style={{ width: '100%', display: 'flex' }}>
+                <Input type="text" id="name" className="test-area" placeholder="Function call..." value={testValue} onChange={this.handleValue} />
+                <Button type="button" className="test-button" onClick={this.onDebug}> Debug </Button>
+              </div>
+              <div className="debugger">
+                {debuggerComponent}
+              </div>
+            </Col>
+          </Row>
+          <div style={{ height: '20vh', width: '100%' }} />
         </div>
       </div>
     );
