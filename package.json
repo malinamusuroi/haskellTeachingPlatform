@@ -38,7 +38,7 @@
   "dependencies": {
     "antd": "^3.13.2",
     "create-react-class": "^15.6.3",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "monaco-editor": "^0.17.0",
     "monaco-editor-webpack-plugin": "^1.7.0",
     "open": "0.0.5",
